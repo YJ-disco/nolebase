@@ -48,3 +48,20 @@ components.d.ts
 # Logs
 
 *.log
+
+# 笔记目录本地配置、运行状态与编辑器临时文件
+笔记/.obsidian/
+笔记/.workbuddy/
+笔记/skills/
+笔记/.Trash/
+笔记/.trash/
+笔记/**/.DS_Store
+笔记/**/*.swp
+笔记/**/*.swo
+笔记/**/*~
+笔记/**/.~lock.*
+
+# 任务脚本与中间产物（保留站点构建脚本 update.ts 与 types/）
+scripts/*
+!scripts/update.ts
+!scripts/types/

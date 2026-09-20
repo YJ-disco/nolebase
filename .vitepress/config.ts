@@ -29,6 +29,12 @@ export default defineConfig({
   title: siteName,
   description: siteDescription,
   ignoreDeadLinks: true,
+  // 站点的内容源是 笔记/，这里排除掉混在内容目录里的工具与元信息文件，避免被构建成页面
+  srcExclude: [
+    '**/AGENTS.md',
+    '**/.workbuddy/**',
+    '笔记/skills/**',
+  ],
   head: [
     ['meta', {
       name: 'theme-color',
