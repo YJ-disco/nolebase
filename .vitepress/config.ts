@@ -34,6 +34,7 @@ export default defineConfig({
     '**/AGENTS.md',
     '**/.workbuddy/**',
     '笔记/skills/**',
+    '笔记/tmp/**',
   ],
   head: [
     ['meta', {

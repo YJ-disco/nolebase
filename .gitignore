@@ -61,7 +61,10 @@ components.d.ts
 笔记/**/*~
 笔记/**/.~lock.*
 
-# 任务脚本与中间产物（保留站点构建脚本 update.ts 与 types/）
+# 站点构建脚本（scripts/ 只留这两个）
 scripts/*
 !scripts/update.ts
 !scripts/types/
+
+# 任务脚本与中间产物：一律放 笔记/tmp/，不进站点也不进 git
+笔记/tmp/
