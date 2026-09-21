@@ -1,0 +1,235 @@
+---
+tags:
+  - AI/llm/架构
+---
+
+# FFN 与激活函数
+
+[[11-Self-Attention 机制]] 讲的是 token 之间怎么交互。这一篇讲同一个 Block 里的另一半 —— **每个 token 自己怎么被加工**。它占了 Block 参数量的约 2/3，是参数效率与并行切分的主战场。
+
+## 一、角色定位：先交互，后加工
+
+| 子模块 | 运算范围 | 职责 |
+| --- | --- | --- |
+| Self-Attention | **token 间** | 信息交互 —— 每个 token 看见其他 token 并汇聚相关信息 |
+| **FFN** | **token 内** | 加工 —— 对每个 token 的向量**独立**施加相同的非线性变换 |
+
+流水线的类比：Attention 是「原料分拣站」，按需求（Query）从各货架（Key）挑出相关原料（Value）汇集到一起；FFN 是随后的「加工车间」，对每份原料独立深加工 —— **车间里每条线各走各的，不再交互**。
+
+这两步的顺序有实质意义：
+
+- **Attention 本质是加权求和，是线性运算。** 只靠它，模型表达能力严重受限。
+- **FFN 引入非线性** —— 按万能近似定理，带非线性激活的两层前馈网络可逼近任意连续函数。
+
+近年研究还给出了一个更具体的定位：**FFN 承担「知识库」角色** —— 大量事实性知识（「巴黎是法国的首都」）被编码在 FFN 参数里，Attention 更多负责组织和提取。这解释了为什么 FFN 需要那么大容量。
+
+## 二、展开-压缩结构
+
+$$\text{FFN}(x) = \sigma(xW_1 + b_1)W_2 + b_2$$
+
+| 项 | 形状 | 作用 |
+| --- | --- | --- |
+| $W_1$ | $(d_{model}, d_{ff})$ | **升维** |
+| $\sigma$ | — | 非线性 |
+| $W_2$ | $(d_{ff}, d_{model})$ | **降维** |
+
+$d_{model} = 4096$、$d_{ff} = 16384$ 时的数据流：
+
+```
+输入 (N, 4096) → 升维 (N, 16384) → 激活 (N, 16384) → 降维 (N, 4096)
+```
+
+现代大模型通常**省略 bias**。
+
+### 为什么先升维再降维
+
+四条理由：
+
+1. **高维空间线性可分性更好。** 一维上混在一起的红蓝球很难分开，抛到三维就容易找一张平面切开。$W_1$ 做的就是这件事。
+2. **激活函数在高维更有效。** 每个维度可看作一个独立「特征检测器」，维度越高，能同时检测的模式越多。
+3. **降维是信息蒸馏。** $W_2$ 迫使模型只保留最重要的信息。
+4. **与 Autoencoder 方向相反。** Autoencoder 先压缩再还原（学低维表示），FFN 先展开再压缩（在高维做复杂变换后提取）。
+
+> [!warning] 没有激活函数，FFN 就没有存在意义
+> 两层线性变换的复合仍是线性变换 —— $xW_1W_2$ 等价于单层 $x(W_1W_2)$。**非线性是 FFN 全部表达能力的来源。**
+
+## 三、激活函数
+
+### ReLU
+
+$$\text{ReLU}(x) = \max(0, x)$$
+
+输出范围 $[0, +\infty)$，正半轴梯度恒为 1，计算只需一次比较。
+
+**致命缺陷是 Dying ReLU**：某个神经元的输入落入负区间后，输出为 0、梯度也为 0 —— 权重得不到任何更新信号；下一轮输入大概率仍为负，于是该神经元**永久死亡**。学习率大时尤其严重。
+
+> 实践中有时观察到一个网络里**超过 40% 的 ReLU 神经元处于死亡状态** —— 有效容量大幅缩水。
+
+LeakyReLU 给负半轴一个微小斜率来缓解，但没解决零点不光滑的根本问题。
+
+### GELU
+
+$$\text{GELU}(x) = x \cdot \Phi(x) = x \cdot \frac{1}{2}\left[1 + \operatorname{erf}\left(\frac{x}{\sqrt{2}}\right)\right]$$
+
+常用 tanh 近似：
+
+$$\text{GELU}(x) \approx 0.5x\left[1 + \tanh\left(\sqrt{\frac{2}{\pi}}(x + 0.044715x^3)\right)\right]$$
+
+**核心思想是概率化门控**：GELU 计算的是「以概率 $\Phi(x)$ 保留 $x$、以概率 $1-\Phi(x)$ 置零」的期望。为什么用正态 CDF —— 假设输入近似正态分布，则值越大（越偏离均值向右）越可能是信号而非噪声。$\Phi(x)$ 恰是一个随输入单调递增的保留概率。
+
+与 ReLU 的硬切换相比，这是**软门控**：接近零的输入不会被完全截断，而是按与其大小成正比的概率保留。
+
+输出范围约 $[-0.17, +\infty)$，处处光滑可微，无神经元死亡问题。
+
+### Swish / SiLU
+
+$$\text{Swish}(x) = x \cdot \sigma(\beta x)$$
+
+$\beta = 1$ 时简写为 $\text{SiLU}(x) = x\sigma(x)$。
+
+sigmoid 输出一个 0–1 的「门控值」，乘以 $x$ 自己 —— 这就是**自门控**（self-gating）：用**输入自身**控制信息通过量。大正值时趋近线性，大负值时趋近截断；在 $x \approx -1.278$ 处取到最小值约 $-0.278$。
+
+| $\beta$ | 退化为什么 |
+| --- | --- |
+| $\to \infty$ | ReLU |
+| $= 0$ | 线性函数 $x/2$ |
+
+**平滑性带来实质收益**：ReLU 在 $x=0$ 处梯度不连续（左导 0、右导 1），损失曲面存在「棱角」，梯度下降在这些点附近容易震荡。Swish 处处可微，梯度信号在全域连续变化。
+
+### 三者对照
+
+| 特性 | ReLU | GELU | Swish / SiLU |
+| --- | --- | --- | --- |
+| 公式 | $\max(0,x)$ | $x\Phi(x)$ | $x\sigma(x)$ |
+| 输出范围 | $[0,+\infty)$ | 约 $[-0.17,+\infty)$ | 约 $[-0.278,+\infty)$ |
+| 零点可微 | 否 | 是 | 是 |
+| 单调 | 是 | 否（近似单调） | 否 |
+| 神经元死亡 | **有** | 无 | 无 |
+| 计算成本 | 最低 | 中 | 中 |
+| 典型应用 | 原始 Transformer | BERT、GPT-2 | LLaMA（SwiGLU 中） |
+
+> GELU 涉及 `erf` 或 `tanh`，计算量比 ReLU 大 —— **但相对 GEMM 而言这个差异几乎可以忽略**。这也是「激活函数选型主要看效果、不看速度」的原因。
+
+## 四、SwiGLU
+
+### GLU 的门控思想
+
+标准 FFN 对所有维度施加**统一的**激活函数。GLU 换了思路：**让模型自己学「哪些信息该通过、哪些该被抑制」**。
+
+$$\text{GLU}(x) = (xW_{up}) \otimes \sigma(xW_{gate})$$
+
+两个独立投影：一个生成「候选内容」，一个生成「门控信号」（每维一个 0–1 的通过概率）。逐元素相乘 —— 门控大的维度保留，小的抑制。**这比统一激活的表达能力强得多：模型可以学到条件化的计算。**
+
+### SwiGLU
+
+Shazeer 在 *GLU Variants Improve Transformer*（2020）里把门控中的 sigmoid 换成 Swish：
+
+$$\text{FFN}_{SwiGLU}(x) = \left[\text{Swish}(xW_{gate}) \otimes (xW_{up})\right]W_{down}$$
+
+| 矩阵 | 形状 | 作用 |
+| --- | --- | --- |
+| $W_{gate}$ | $(d_{model}, d_{ff})$ | 门控投影，输出经 Swish 激活 |
+| $W_{up}$ | $(d_{model}, d_{ff})$ | 内容投影，**不经过激活** |
+| $W_{down}$ | $(d_{ff}, d_{model})$ | 降维 |
+
+**门控为什么有效**，三条：
+
+1. **更精细的信息筛选** —— 可以对每维施加不同的通过/抑制决策，学到「当输入有特征 A 时保留这些维度」
+2. **更丰富的梯度信号** —— 门控与内容两条独立路径回传，相当于一种隐式的「梯度高速公路」，与残差连接异曲同工
+3. **实验一致** —— Shazeer 在等参数量下对比多种 GLU 变体，SwiGLU 在多个下游任务上最优；LLaMA / Mistral / Qwen / DeepSeek 均采用
+
+## 五、参数量：两种结构其实一样
+
+$d_{model} = 4096$：
+
+| | 标准 FFN（$d_{ff}=4d=16384$） | SwiGLU（$d_{ff}=11008$） |
+| --- | --- | --- |
+| 矩阵数 | 2 | **3** |
+| 中间维度 | $4d_{model}$ | $\frac{8}{3}d_{model}$ |
+| 总参数量 | $8d_{model}^2 = 134$ M | $3 \cdot d \cdot \frac{8}{3}d = 8d_{model}^2 = 135$ M |
+| 前向 GEMM 次数 | 2 | **3** |
+
+**关键发现：两种结构总参数量几乎相同**（都是 $8d_{model}^2$）。SwiGLU 靠门控拿到更好的效果，代价是前向多一次 GEMM。
+
+### 与 Attention 的对比：FFN 占 2/3
+
+| 模块 | 参数量 | 占 Block |
+| --- | --- | --- |
+| Self-Attention（$W_Q,W_K,W_V,W_O$） | $4d^2 = 67$ M | 约 33% |
+| **FFN** | $8d^2 = 135$ M | **约 67%** |
+| LayerNorm ×2 | $4d = 16$ K | < 0.01% |
+| 单 Block 合计 | | 约 201 M |
+
+> **FFN 参数量约为 Attention 的 2 倍。** 任何针对 FFN 的优化（并行切分、量化、专家化）对整体效率的影响都远大于对 Attention 做同样的事。
+
+### $d_{ff}$ 为什么是 4× 和 8/3×
+
+**4 倍**来自原始论文（$d_{model}=512, d_{ff}=2048$），后来成为事实标准。为什么是 4 —— 很大程度上是经验选择：2 倍高维空间不够、表达能力受限；8 倍参数量膨胀但收益边际递减；**4 倍是效果与参数效率的平衡点**。
+
+**8/3 倍的推导是「参数守恒」**：SwiGLU 用 3 个矩阵，若仍取 $d_{ff}=4d$ 则总参数变成 $12d^2$，比标准 FFN 多 50%。要维持 $8d^2$：
+
+$$3 \cdot d_{model} \cdot d_{ff} = 8d_{model}^2 \quad\Longrightarrow\quad d_{ff} = \frac{8}{3}d_{model} \approx 2.667\,d_{model}$$
+
+$d_{model}=4096$ 得 $10922.67$ —— 工程上会**取整到 128 或 256 的倍数**以保证 Tensor Core 的维度对齐。**LLaMA-2-7B 的 $d_{ff}=11008$ 就是 $43 \times 256$。**
+
+> 这一步「取整到对齐值」不是细节：维度不对齐会直接让 Tensor Core 利用率下降，而 $d_{ff}$ 又必须能被 TP 的卡数整除（$11008$ 在 TP=2/4/8 下分别为 5504 / 2752 / 1376，都整除）。**这是 $d_{ff}$ 偏好 2 的幂或 128/256 倍数的真正原因。**
+
+## 六、张量并行切分 FFN
+
+FFN 占 Block 参数 2/3，它怎么切直接决定张量并行的效率。Megatron-LM 的方案很精巧：**$W_{up}$（和 $W_{gate}$）按列切，$W_{down}$ 按行切**，中间结果不需要任何通信。
+
+以 2 卡为例：
+
+```
+① W_up 列切（按输出维均分）
+   GPU0: W_up[:, :d_ff/2]        GPU1: W_up[:, d_ff/2:]
+   h_0 = activation(x @ W_up_0)  h_1 = activation(x @ W_up_1)
+
+② W_down 行切（按输入维均分）
+   GPU0: W_down[:d_ff/2, :]      GPU1: W_down[d_ff/2:, :]
+   out_0 = h_0 @ W_down_0        out_1 = h_1 @ W_down_1
+
+③ AllReduce 求和
+   output = out_0 + out_1
+```
+
+**为什么可以这样做** —— 恒等式：
+
+$$hW_{down} = \begin{bmatrix}h_0 & h_1\end{bmatrix}\begin{bmatrix}W_{down,0}\\ W_{down,1}\end{bmatrix} = h_0W_{down,0} + h_1W_{down,1}$$
+
+**列切分的关键优势是激活函数可以独立施加** —— 激活是逐元素操作，不依赖其他维度的值，所以「对完整向量施加激活」等价于「对各分片分别施加」。
+
+SwiGLU 的切法完全一致：$W_{gate}$ 与 $W_{up}$ 都列切、$W_{down}$ 行切，逐元素相乘在各卡本地完成。
+
+**整个 FFN 前向只需一次 AllReduce。** 每卡上的三次 GEMM 与逐元素操作全是本地计算。加上 Attention 的一次，**每个 Block 共两次 AllReduce** —— 这个数字是后面估算张量并行通信量的基础（见 [[03-多卡互联与集群网络]]）。
+
+## 七、MoE：把 FFN 拆成多个专家
+
+MoE 的核心改造对象**正是 FFN**。思路直观：与其用一个巨大 FFN，不如拆成多个较小的「专家」，每个专家是独立 FFN；每个 token 只激活少数几个专家，其余休眠。
+
+例如 64 个专家、每 token 选 Top-2：
+
+- **总参数量** = 64 个专家之和（很大）
+- **单 token 计算量** ≈ 2 个专家（很小）
+
+**这就是「扩大模型容量而不等比例增加计算量」的实现方式** —— 参数与计算解耦。代价是**路由**（每个 token 选哪些专家）本身需要通信：专家分布在不同 GPU 上时，token 要走 All-to-All 被送到对应专家所在卡再送回来，这就是专家并行（EP）。
+
+MoE 并行与 All-to-All 的细节属于训练侧，见 [[00-训练专栏导览]] 的待建清单。
+
+## 相关
+
+- [[11-Self-Attention 机制]] —— Block 里的另一半
+- [[13-归一化与残差连接]] —— 两个子模块之间的连接方式
+- [[02-Transformer 架构]] —— 整体骨架
+- [[10-KV Cache 与推理优化]] —— FFN 权重在推理时是 Memory Bound 的主要来源
+- [[03-多卡互联与集群网络]] —— 每次 AllReduce 的代价
+
+## 参考
+
+- **AIInfraGuide 3.4 Transformer 前馈网络 FFN 深入理解**（角色定位、展开-压缩的四条理由、ReLU/GELU/Swish 对比、GLU 与 SwiGLU、参数量守恒推导、$d_{ff}$ 对齐、Megatron 切分方案、MoE）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%80-%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86/transformer/34-transformer%E5%89%8D%E9%A6%88%E7%BD%91%E7%BB%9Cffn%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3
+- **Attention Is All You Need**（$d_{ff} = 4d_{model}$ 的原始设定）：https://arxiv.org/abs/1706.03762
+- **Gaussian Error Linear Units (GELUs)**：https://arxiv.org/abs/1606.08415
+- **Searching for Activation Functions**（Swish）：https://arxiv.org/abs/1710.05941
+- **GLU Variants Improve Transformer**（SwiGLU）：https://arxiv.org/abs/2002.05202
+- **Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism**（FFN 的列切/行切方案）：https://arxiv.org/abs/1909.08053
+- **Switch Transformers**（MoE 与路由）：https://arxiv.org/abs/2101.03961

@@ -1,0 +1,164 @@
+---
+tags:
+  - AI/infra/推理引擎
+  - AI/infra/解码优化
+---
+
+# Speculative Decoding
+
+自回归解码是**串行**的 —— 第 $t+1$ 个 token 必须等第 $t$ 个算完（见 [[03-Decoder-Only 与自回归]]）。Speculative Decoding 用「先猜后验」打破这个串行瓶颈：**一次前向产出多个 token，且输出分布与逐 token 采样完全相同。**
+
+它做的事和前面所有优化都不同：**不减访存，而是让同一次访存产出更多结果。**
+
+## 一、为什么能加速：一次套利
+
+回顾 [[01-推理性能指标与瓶颈定位]] 的结论：Decode 每步只处理 1 个 token，却要把整个模型权重从 HBM 流一遍 —— 算术强度约 **1–2 FLOP/Byte**。
+
+对比硬件的 ridge point（峰值算力 ÷ 峰值带宽）：
+
+| 卡 | 精度 | 峰值算力 | 带宽 | Ridge |
+| --- | --- | --- | --- | --- |
+| H100 SXM | FP16 | 989 TFLOPS | 3.35 TB/s | **295 FLOP/Byte** |
+| H100 SXM | FP8 | 1,979 TFLOPS | 3.35 TB/s | **591 FLOP/Byte** |
+| H200 | FP8 | 1,979 TFLOPS | 4.8 TB/s | 412 FLOP/Byte |
+| B200 | FP8 | 约 4,500 TFLOPS | 8 TB/s | 562 FLOP/Byte |
+
+**单流 Decode 的工作点是 1–2 FLOP/Byte，比 ridge 低两到三个数量级。**
+
+这个比值就是 **speculation budget** —— 在撞上带宽天花板之前，你还能往每次搬运里塞多少计算。单流上它大约是 **300–600×**。
+
+> **这就是 Speculative Decoding 的套利空间**：既然算力闲置了两三个数量级，那就**用计算换串行步数** —— 让目标模型一次前向同时验证多个候选 token。
+
+## 二、无损的机制：拒绝采样
+
+设目标模型分布 $p(x)$、草稿模型分布 $q(x)$。每轮：
+
+1. 草稿模型自回归提出 $K$ 个候选 token：$x_1,\ldots,x_K \sim q$
+2. **目标模型对全部 $K+1$ 个位置做一次并行前向**，得到每个位置的 $p$
+3. 从左到右逐个接受/拒绝
+
+**接受规则**：
+
+$$P_{\text{accept}}(x) = \min\left(1, \frac{p(x)}{q(x)}\right)$$
+
+- 若 $p(x) \ge q(x)$ → **必然接受**（草稿低估了它，没有理由拒绝）
+- 若 $p(x) < q(x)$ → 以 $p(x)/q(x)$ 的概率接受
+
+**拒绝时的补救**：丢弃该 token，从**修正后的残差分布**重新采样：
+
+$$\text{Residual}(x) = \frac{\max(0,\ p(x)-q(x))}{\sum_y \max(0,\ p(y)-q(y))}$$
+
+> **接受与修正的数学刚好配平** —— 最终输出分布与「直接从目标模型逐个采样」**完全相同，在所有温度设置下都成立**。
+>
+> 换成一句话：**用户从输出上分辨不出用了投机解码。** 这不是近似加速，是精确加速。
+
+### 一个必须说清的 caveat
+
+> [!warning] losslessness 只对「精确的拒绝采样规则」成立
+> 工程上有更快的变体 —— **relaxed acceptance**、**typical acceptance**、各种激进的树接受策略 —— 它们靠**放松检验**来抬高接受率，**这些会改变输出分布**。
+>
+> 它们往往值得用，但**引用加速比时必须说明是哪种规则产生的**。一个来自放松接受的 4× 和一个来自精确拒绝采样的 4×，不是同一种东西。
+
+## 三、核心判据：看 accept length，不看接受率
+
+**加速比由「每轮平均接受多少个 token」决定，不是由接受率决定。**
+
+> 一个「下一步 90% 对、但第三步就崩」的草稿，**不如**一个「70% 对、但能连贯五步」的草稿。
+
+**原因是经济结构**：每一轮 run 无论多长，**都恰好付一次目标模型的权重加载**。所以杠杆在 **run 的长度**：
+
+$$\text{加速比} \approx \frac{\text{平均接受长度} + 1}{1} \times \frac{1}{1 + \text{草稿开销占比}}$$
+
+「+1」是目标模型在整条都接受时会额外给出的那个 bonus token。
+
+**这条判据决定了所有后续优化的方向** —— 从「找小模型」转向「让草稿在**长距离上**与目标对齐」。
+
+## 四、演进脉络
+
+| 阶段 | 方案 | 做法 | 报告加速 |
+| --- | --- | --- | --- |
+| 前身（2018） | **Blockwise Parallel Decoding** | 辅助预测头猜多个未来 token | 只支持贪心解码，**不保持采样分布** |
+| **原始（2022–23）** | **Leviathan**（`arXiv:2211.17192`，ICML 2023 oral）/ **Chen**（`arXiv:2302.01318`） | 独立小模型做草稿 + 修正拒绝采样 | T5-XXL **2–3×**；Chinchilla **2–2.5×** |
+| 树验证 | **SpecInfer**（ASPLOS 2024） | 多个小模型联合建候选树，目标一次并行验证整棵树，保留最长有效路径 | 1.5–3.5× |
+| 去草稿模型 | **Medusa**（`arXiv:2401.10774`） | **不另设草稿模型**，在目标模型上挂多个轻量解码头，各预测一个未来位置 | 2.2–3.6× |
+| 特征空间草稿 | **EAGLE** | 在目标的**内部特征**（倒数第二层）上做自回归，而非 token 上 | LLaMA-2-Chat-70B 延迟降 2.7–3.5× |
+| 动态树 | **EAGLE-2**（ICML 2024） | 树形动态伸缩：不确定处展宽、确定处保持窄 | — |
+| 训练对齐 | **EAGLE-3**（NeurIPS 2025，`arXiv:2503.01840`） | 融合早/中/晚层特征、**直接预测 token**（去掉特征回归中间步）、动态 draft tree | **接受率 0.75→0.82，每轮验证 token 数 3.0→4.5** |
+| 终点 | **Multi-Token Prediction**（DeepSeek 等） | 把草稿折进目标模型本身 | — |
+
+**方向很清晰**：从「维护两个模型」→「把草稿折进目标」，代价与收益都在这一条线上移动。
+
+### Tree Attention 验证
+
+草稿输出一棵树时，目标模型仍只做**一次前向**：
+
+**用 tree attention mask 代替纯线性的因果掩码** —— 每个 token 只 attend 它在树上的祖先。
+
+> **因果掩码的「下三角」被替换成「树拓扑」**，其余机制不变。所以一次前向能验证多条候选路径，取最长可接受的分支。这是「一次验证多个候选」的具体实现方式。
+
+## 五、草稿模型怎么训
+
+**用随机的小模型当草稿，效果很差。** 标准做法是**从目标模型蒸馏**：
+
+| 步 | 做法 |
+| --- | --- |
+| 1 | 选一个小架构 —— **70B 目标配约 1B 草稿，7B 目标配约 500M**（小 5–30×） |
+| 2 | 用目标模型跑一遍大语料，存下它的 next-token 分布 |
+| 3 | 用 **KL 散度对齐目标的分布**训练草稿 —— **不是用真值 token** |
+
+**关键在第三步**：用真值训出来的草稿「猜的是人写什么」，而它要猜的是「**目标模型会输出什么**」—— 这两者不一样。
+
+蒸馏后的接受率经验值：
+
+| 场景 | 接受率 $\alpha$ |
+| --- | --- |
+| 代码 | 0.6 – 0.8 |
+| 自然语言对话 | 0.7 – 0.85 |
+
+生产环境对应的加速比落在 **2–3×**。
+
+## 六、工程上的两个约束
+
+### 与调度的耦合
+
+投机解码在 V1 调度器里表示为「某个请求这一步要处理多少 token」的一个取值（见 [[03-推理调度：Continuous Batching 与 Chunked Prefill]]）：**每轮验证是若干个候选 token**。
+
+代价是**一步内不同请求推进的 token 数不再统一**，KV 块的增长也不再是每步一块 —— 这抬高了调度的复杂度，与 [[04-前缀缓存：APC 与 RadixAttention|前缀缓存]] 叠加时还要处理更复杂的块对齐。
+
+### 与量化的叠加风险
+
+草稿与目标都量化时，**两者的分布偏移会叠加**，接受率下降得更快。收益可能不如预期（见 [[08-量化]]）。
+
+## 七、什么时候值得用
+
+**判据是任务的「可预测性」**：
+
+| 场景 | 预期 |
+| --- | --- |
+| **代码生成** | 加速明显 —— 语法与惯用法高度重复，草稿容易猜对 |
+| 结构化输出 / 翻译 | 加速明显 |
+| **开放对话 / 创意写作** | **收益有限** —— 下一步本来就不确定，草稿猜不中 |
+| 温度很低的采样 | 加速明显（接近贪心时草稿更容易对齐） |
+| 高温度采样 | 收益下降 |
+
+> 生产采用现状：**2024 年起成为标准配置**。Google 用在搜索的 AI Overviews；vLLM、TensorRT-LLM、SGLang 均内置支持。
+
+## 相关
+
+- [[01-推理性能指标与瓶颈定位]] —— Decode 的 memory-bound 与 ridge point
+- [[03-推理调度：Continuous Batching 与 Chunked Prefill]] —— 投机解码在调度器里的表示
+- [[08-量化]] —— 叠加时的精度风险
+- [[03-Decoder-Only 与自回归]] —— 串行性是这套方案的动机
+- [[08-FlashAttention]] —— 同属「用一次前向做更多事」的思路
+
+## 参考
+
+- **Fast Inference from Transformers via Speculative Decoding**（Leviathan et al., ICML 2023 oral，修正拒绝采样的原始出处）：https://arxiv.org/abs/2211.17192
+- **Accelerating Large Language Model Decoding with Speculative Sampling**（Chen et al., DeepMind，同期独立提出）：https://arxiv.org/abs/2302.01318
+- **SpecInfer: Accelerating Generative LLM Serving with Tree-based Speculative Inference**（ASPLOS 2024）：https://arxiv.org/abs/2305.09781
+- **Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads**：https://arxiv.org/abs/2401.10774
+- **EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty**：https://arxiv.org/abs/2401.15077
+- **EAGLE-3: Scaling up Inference Acceleration via Training-Time Test**（NeurIPS 2025）：https://arxiv.org/abs/2503.01840
+- **vLLM — Speculative Decoding 文档**（N-gram / EAGLE / draft 模型的配置）：https://docs.vllm.ai/en/latest/features/spec_decode.html
+- **拒绝采样公式、SpecInfer / Medusa / EAGLE 的加速比与 EAGLE-3 的 0.82 / 4.5 数据、生产采用现状**：来自维基百科条目与第三方技术分析，**属二手整理**，公式部分已与 Leviathan 原论文口径核对：https://en.wikipedia.org/wiki/Speculative_decoding ｜ https://aiengineeringfromscratch.com/lesson.html?path=phases/10-llms-from-scratch/25-speculative-decoding
+- **speculation budget 的 ridge point 数字（591 / 412 / 562 FLOP/Byte）**：第三方分析，**按 H100 / H200 / B200 官方规格可自行复核**：https://www.thesoftwarefrontier.com/p/decode-is-memory-bound-speculation

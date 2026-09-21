@@ -202,6 +202,10 @@ SGLang 的答案是**把所有请求的历史 KV 组织成一棵前缀树（Radi
 - [[09-位置编码]] —— RoPE 与缓存的位置一致性坑
 - [[18-Context Engineering|Context Engineering]] —— 「静态内容放开头」在成本与服务两侧的双重收益
 - [[05-文本分词与子词算法：BPE、WordPiece 与 Unigram]] —— chat template 拼错会让缓存前缀失效
+- [[01-推理性能指标与瓶颈定位]] —— 算术强度与 Roofline 的量化推导、TTFT/TPOT/Goodput 的完整口径
+- [[02-PagedAttention：KV Cache 的分页管理]] —— 本篇讲「这块显存有多大」，那一篇讲「引擎怎么把它管起来」
+- [[03-推理调度：Continuous Batching 与 Chunked Prefill]] —— batched decode 的调度实现
+- [[04-前缀缓存：APC 与 RadixAttention]] —— APC 块哈希与 RadixAttention 的深入展开
 
 ## 参考
 

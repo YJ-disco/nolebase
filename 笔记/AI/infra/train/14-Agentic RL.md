@@ -1,6 +1,6 @@
 ---
 tags:
-  - AI/llm
+  - AI/infra/训练方法
 ---
 
 # Agentic RL

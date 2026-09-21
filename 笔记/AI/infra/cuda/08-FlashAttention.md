@@ -1,0 +1,214 @@
+---
+tags:
+  - AI/infra/CUDA
+  - AI/infra/算子优化
+---
+
+# FlashAttention
+
+[[11-Self-Attention 机制]] 算过一笔账：$B=1$、$N_h=32$、$S=32768$ 时，显式物化 FP16 的分数矩阵需要 **64 GiB**。FlashAttention 就是解这道题的方案。
+
+它的思路和前面所有优化都不一样：**不减 FLOPs，只减访存。**
+
+## 一、标准 Attention 的瓶颈在哪
+
+$$S = QK^\top/\sqrt{d} \qquad P = \text{softmax}(S) \qquad O = PV$$
+
+| 指标 | 量级 | 说明 |
+| --- | --- | --- |
+| 中间矩阵 $S$、$P$ 大小 | $O(N^2)$ | 各需 $N \times N$ 存储 |
+| **HBM 读写量** | **$O(N^2)$** | 反复读写 $N \times N$ 矩阵 |
+| 计算量 | $O(N^2 d)$ | 两次矩阵乘 |
+
+**算术强度**：
+
+$$\text{AI} = \frac{O(N^2 d)}{O(N^2 + Nd)} \approx O(d)$$
+
+$d$ 通常只有 64 或 128 —— **算术强度只有 $d$ 的量级**，远低于 H100 平衡点的 295 FLOP/Byte（见 [[01-GPU 硬件架构与存储层次]]）。
+
+> 标准 Attention 是**彻头彻尾的访存受限操作**，计算单元大部分时间在等数据。
+
+## 二、两个关键技术，缺一不可
+
+| 技术 | 解决什么 |
+| --- | --- |
+| **Tiling（分块）** | 如何**不生成**完整的 $N \times N$ 矩阵 |
+| **Online Softmax** | 分块计算时，Softmax 依赖全局信息怎么办 |
+
+**第二条是关键。** Safe Softmax 需要先扫一遍求 max、再扫一遍求 sum、最后才能归一化 —— 这个顺序依赖与分块策略直接矛盾。Online Softmax 的递推（见 [[07-Softmax 与 Online Softmax]]）让 max 与 sum 可以边加载新块边修正，**这是 FlashAttention 能成立的前提**。
+
+> **FlashAttention 本质上就是「Online Softmax + 把 $PV$ 也融进同一遍循环」。** 后者的具体形式是输出 $O$ 的增量修正公式（见 [[07-Softmax 与 Online Softmax]] 第五节）。
+
+## 三、IO 复杂度：从 $O(N^2)$ 到 $O(N^2d^2/M)$
+
+| 算法 | HBM 访问量 |
+| --- | --- |
+| 标准 Attention | $O(Nd + N^2) = O(N^2)$ |
+| **FlashAttention** | $O\left(\dfrac{N^2 d^2}{M}\right)$ |
+
+（$M$ 为 SRAM 大小，以元素计。）拆解一下这个量级的来源：
+
+- 由块大小约束 $B_c = O(M/d)$，外循环共 $T_c = N/B_c = O(Nd/M)$ 次
+- **每次外循环要遍历完整的 $Q$ 与 $O$**（共 $O(Nd)$ 个元素）→ $Q/O$ 的总访问量 $= T_c \cdot Nd = O(N^2d^2/M)$
+- $K$、$V$ 整体只读一次，$O(Nd)$，相对前者可忽略
+
+> **SRAM 越大（$M$ 越大），每次能装下的块越大，外循环次数越少，对 $Q/O$ 的重复读写就越少。** 很直观：这是「片上空间换 HBM 流量」的直接表述。
+
+**而且这个量级是最优的** —— 论文证明了任何精确 Attention 算法的 HBM 访问量下界是 $\Omega(N^2d^2/M)$。
+
+典型值：$d = 128$ 时 $d^2 = 16384$，而 $M$ 对应约 192 KB / 2 = 98304 个 FP16 元素 —— **$d^2 < M$，所以这个上界远小于 $O(N^2)$**。
+
+### 反向传播靠重计算
+
+前向不保存 $N \times N$ 的 $P$，反向就用不了它。**FlashAttention 的做法是反向时重新计算 $P$** —— 用时间换空间。
+
+**重计算的代价是可以算清的**：前向本来要算两次矩阵乘（$QK^\top$、$PV$），反向重算 $S$、$P$ 又要一次前向，所以总 FLOPs 增加，但 HBM 访问量大幅下降。在 memory-bound 的 Attention 上，**这笔交换是划算的**。
+
+> 这与「梯度检查点」是同一个思想（见 [[01-GPU 硬件架构与存储层次]]），只是作用在 Attention 这个特定算子上。
+
+## 四、V1 的实际效果
+
+| 序列长度 | 加速比 | 备注 |
+| --- | --- | --- |
+| 1024 | 2.4× | |
+| 2048 | 2.8× | |
+| 4096 | 3.5× | |
+| **8192** | — | **标准实现在此 OOM，FA 可运行** |
+
+**最后一行才是本质收益**：价值在「原来跑不了的现在能跑」，速度只是附带。
+
+但 V1 在 A100 上**只达到了理论 FLOPS 的 25%–40%** —— 对一个「减少 IO 后应该变成 Compute-Bound」的算子来说，这个利用率不理想。
+
+## 五、V2 的三个改进
+
+瓶颈按影响从大到小：
+
+| 问题 | 原因 | 影响 |
+| --- | --- | --- |
+| **循环顺序不佳** | 外循环遍历 $K/V$，导致 $O$ 块被反复读写、$Q$ 块被重复加载 | 额外 HBM 流量，且**无法跨 $Q$ 并行** |
+| **非 GEMM 运算占比高** | Softmax rescaling 有大量逐元素操作 | Tensor Core 利用率低 |
+| **Warp 切分维度不当** | 沿 $K/V$ 切分给 Warp，多个 Warp 共同更新同一行 $O$ | 需要频繁的 Warp 间通信与归并 |
+
+### 改进一：调换循环顺序
+
+**外循环沿 $Q$ 而不是沿 $K/V$。** 这一个改动同时拿到三个收益：
+
+1. **$Q$ 块加载一次就够** 不用反复读
+2. **减少 $O$ 的重复读写** —— 每个 Q 块对应自己的一行输出，在自己的外循环迭代内累积完
+3. **天然支持跨 $Q$ 并行** —— 不同的 Q 块可以独立分给不同 Thread Block，**这才是并行度的来源**
+
+### 改进二：延迟 Rescaling
+
+**V1 每个 $K/V$ 块都做一次归一化**：
+
+$$O_i^{(j)} = \frac{l_i^{(j-1)} e^{m_i^{(j-1)}-m_i^{(j)}}}{l_i^{(j)}} O_i^{(j-1)} + \frac{e^{S_{ij}-m_i^{(j)}}}{l_i^{(j)}} V_j$$
+
+**V2 只维护未归一化的累积**：
+
+$$\tilde O_i^{(j)} = e^{m_i^{(j-1)}-m_i^{(j)}} \tilde O_i^{(j-1)} + e^{S_{ij}-m_i^{(j)}} V_j, \qquad O_i = \tilde O_i^{(T_c)}/l_i^{(T_c)}$$
+
+**收益是精确可数的**：V1 在内循环每次迭代要做「旧 $O$ 反归一化（乘 $l^{(j-1)}$）+ 重新归一化（除 $l^{(j)}$）+ 新贡献归一化（除 $l^{(j)}$）」—— **2 次除法 + 1 次乘法**。V2 把它们全移出内循环，只在最后做一次除法。
+
+除法在 GPU 上比乘法贵得多，而内循环迭代 $T_c$ 次 —— **迭代次数越多，省得越多**。
+
+### 改进三：Warp 沿 $Q$ 分配
+
+V1 沿 $K/V$ 切给 Warp，多个 Warp 共同更新同一行 $O$，**需要合并各自的 Softmax 部分结果**（局部 max 与 sum）—— 这是频繁的 Warp 间通信。
+
+V2 改成**沿 $Q$ 维度切给 Warp**：每个 Warp 负责独立的 Q 行，输出的不同行之间没有依赖，**不需要任何跨 Warp 归并**。
+
+> 这三条改进有一个共同点：**都在减少「非必要的同步与数据移动」**，而不是减少计算量。与第二节的结论一致。
+
+## 六、Causal Mask 的块级跳过
+
+自回归模型里第 $i$ 个 token 只能看到 $j \le i$，所以 $N \times N$ 矩阵**只有下三角有效，上三角全部置零** —— **理论上约一半计算是无用的**。
+
+V2 按块判断三类情况：
+
+| 块的位置 | 处理 |
+| --- | --- |
+| **完全在 mask 下方**（Q 块最小行号 ≥ K 块最大列号） | 全可见，正常计算 |
+| **跨越对角线** | 逐元素应用 mask |
+| **完全在 mask 上方**（Q 块最大行号 < K 块最小列号） | **直接跳过** |
+
+```
+对角线以下（全可见）   对角线块（部分 mask）   对角线以上（全跳过）
+┌─────────────┐      ┌─────────────┐      ┌─────────────┐
+│ ■ ■ ■ ■ ■ ■ │      │ ■ ■ ■ □ □ □ │      │ □ □ □ □ □ □ │
+│ ■ ■ ■ ■ ■ ■ │      │ ■ ■ ■ ■ □ □ │      │ □ □ □ □ □ □ │
+│ ■ ■ ■ ■ ■ ■ │      │ ■ ■ ■ ■ ■ □ │      │ □ □ □ □ □ □ │
+└─────────────┘      └─────────────┘      └─────────────┘
+```
+
+**配合改进一**：外循环沿 $Q$ 分配后，每个 Thread Block 只需遍历 $K/V$ 到对角线位置就能提前退出内循环。**Causal Attention 上省掉约 50% 的无效计算。**
+
+## 七、V2 的性能
+
+### TFLOPS（A100）
+
+| 序列长度 | V1 | **V2** | V2 利用率 |
+| --- | --- | --- | --- |
+| 1024 | 124 | **196** | 63% |
+| 2048 | 136 | **218** | 70% |
+| 4096 | 141 | **227** | **73%** |
+| 8192 | 138 | **222** | 71% |
+
+**V2 相对 V1 约 1.6×**，利用率从 25–40% 提到 **63–73%**。
+
+### 与其他实现对比（A100-80GB，$N=2048$，$d=128$）
+
+| 实现 | 前向 | 反向 |
+| --- | --- | --- |
+| PyTorch 标准 | 1.0× | 1.0× |
+| FlashAttention V1 | 2.8× | 2.5× |
+| **FlashAttention V2** | **4.3×** | **3.9×** |
+| xFormers (cutlass) | 3.1× | 2.8× |
+
+### 长序列的显存
+
+> [!warning] 这张表不是「单个矩阵的存储成本」
+> 它估算的是**训练时与 Attention 相关的激活显存总量**（含中间张量与梯度缓存，按典型多头配置粗估）。列表的目的是看 **$N^2$ 与 $N$ 两种缩放差异**，不要当成单矩阵尺寸引用。
+
+| 序列长度 | 标准 Attention | FlashAttention V2 |
+| --- | --- | --- |
+| 4K | 128 MB | **4 MB** |
+| 16K | 2 GB | **16 MB** |
+| 64K | **32 GB（OOM）** | **64 MB** |
+
+**$N$ 每翻 4 倍，标准实现涨 16 倍，FA 只涨 4 倍** —— 这就是线性与平方的差别。
+
+### 反向的一处细节
+
+V2 在反向里**保存 logsumexp 而不是分离的 $m$ 与 $l$**：
+
+$$\text{LSE} = m + \log l$$
+
+一个量代替两个量，省一份存储；且反向里处处用到的是 $\exp(m - \cdot)$ 与 $1/l$ 的组合，用 LSE 可以直接得到所需形式。
+
+## 八、后续演进
+
+V1 与 V2 是算法与并行策略的改进。往后的路线转向**吃满新硬件特性**：
+
+| 方向 | 内容 |
+| --- | --- |
+| **FlashAttention-3** | 利用 Hopper 的 `wgmma`（异步、操作数从 SMEM 直进 Tensor Core）、TMA、FP8 |
+| **Decode 阶段的加速** | Flash-Decoding / FlashDecoding++ / FlashInfer —— Decode 是 batch 小、序列长的形态，与训练的前向并行结构不同 |
+| **与推理引擎结合** | PagedAttention 在 GPU 上的分页寻址，见 [[02-PagedAttention：KV Cache 的分页管理]] |
+
+**训练侧（长序列前向 + 反向）与推理侧（Decode）的优化方向不同** —— 训练要的是吞吐与显存，Decode 要的是低延迟与小 batch 下的并行度。这一条区分是「一个 Attention 优化方案能不能用在 Serving 上」的判据。
+
+## 相关
+
+- [[07-Softmax 与 Online Softmax]] —— 本篇的数学前提，含输出修正公式的完整推导
+- [[11-Self-Attention 机制]] —— $N \times N$ 矩阵的显存算例与算术强度
+- [[06-GEMM 性能优化]] —— Attention 里两次矩阵乘的优化基础
+- [[01-GPU 硬件架构与存储层次]] —— SRAM 容量、Roofline 与 Tensor Core
+- [[05-Attention 后端与图优化]] —— 推理引擎里 Attention 后端的工程实现
+
+## 参考
+
+- **AIInfraGuide 6.1 FlashAttention V1 详解 / 6.2 FlashAttention V2 详解**（标准 Attention 的 IO 与算术强度、两个关键技术、IO 复杂度推导与下界、反向重计算、V1 的实际加速与利用率、V2 的三个改进及其量化收益、Causal Mask 的块级跳过、性能对比表、logsumexp）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%BA%8C-cuda%E7%BC%96%E7%A8%8B%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96/61-flashattention-v1%E8%AF%A6%E8%A7%A3
+- **FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness**（IO 复杂度与下界证明）：Dao et al., https://arxiv.org/abs/2205.14135
+- **FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning**：https://arxiv.org/abs/2307.08691
+- **FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision**：https://arxiv.org/abs/2407.08608
+- **Online normalizer calculation for softmax**：https://arxiv.org/abs/1805.02867
