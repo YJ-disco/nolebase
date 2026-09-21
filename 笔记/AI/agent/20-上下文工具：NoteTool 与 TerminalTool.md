@@ -20,7 +20,7 @@ NoteTool 的四个特性：
 | 结构化记录 | Markdown + YAML，机器可解析，人也易读易改 |
 | 版本友好 | 纯文本，天然进 Git |
 | 低开销 | 不走数据库，适合轻量状态追踪 |
-| 灵活分类 | `type` + `tags` 两个维度组织，支持多维检索 |
+| 多维分类 | `type` + `tags` 两个维度组织，支持多维检索 |
 
 ### 四种笔记类型
 
@@ -158,7 +158,7 @@ def run(self, user_input: str) -> str:
 
 ### 多层安全机制
 
-允许智能体执行命令是强大但危险的能力。第一层也是最关键的一层是**命令白名单**——只放行安全的只读命令，完全禁止任何可能修改系统的操作：
+允许智能体执行命令能力很强，但也危险。第一层也是最关键的一层是**命令白名单**——只放行安全的只读命令，完全禁止任何可能修改系统的操作：
 
 ```python
 ALLOWED_COMMANDS = {
@@ -182,7 +182,7 @@ ALLOWED_COMMANDS = {
 
 ```
 terminal.run({"command": "rm -rf /"})
-# ❌ 不允许的命令: rm
+# 不允许的命令: rm
 # 允许的命令: cat, cd, cut, dir, du, ...
 ```
 
@@ -197,12 +197,12 @@ terminal.run({"command": "rm -rf /"})
 | **3 · 超时控制** | 每个命令有执行时间上限，防无限循环与资源耗尽 | `TerminalTool(workspace=..., timeout=30)` |
 | **4 · 输出大小限制** | 限制命令输出体积，防内存溢出 | `TerminalTool(workspace=..., max_output_size=10*1024*1024)` |
 
-第 2 层最值得注意的是它**显式防了路径逃逸**：
+第 2 层**显式防了路径逃逸**：
 
 ```
-terminal.run({"command": "cat ./src/main.py"})     # ✅ 工作目录内
-terminal.run({"command": "cat /etc/passwd"})       # ❌ 不允许访问工作目录外的路径
-terminal.run({"command": "cd ../../../etc"})       # ❌ 不允许访问工作目录外的路径
+terminal.run({"command": "cat ./src/main.py"})     # 允许：工作目录内
+terminal.run({"command": "cat /etc/passwd"})       # 不允许：访问工作目录外的路径
+terminal.run({"command": "cd ../../../etc"})       # 不允许：访问工作目录外的路径
 ```
 
 **第三行是这条防线的关键**——只挡绝对路径的沙箱等于没挡，`..` 一路退出去照样能读系统文件。**沙箱必须在路径解析之后做校验**，而不是在字符串层面匹配前缀。

@@ -58,12 +58,12 @@ class ToolRegistry:
 
     def register_tool(self, tool: Tool):
         if tool.name in self._tools:
-            print(f"⚠️ 警告:工具 '{tool.name}' 已存在，将被覆盖。")
+            print(f"警告:工具 '{tool.name}' 已存在，将被覆盖。")
         self._tools[tool.name] = tool
 
     def register_function(self, name: str, description: str, func: Callable[[str], str]):
         if name in self._functions:
-            print(f"⚠️ 警告:工具 '{name}' 已存在，将被覆盖。")
+            print(f"警告:工具 '{name}' 已存在，将被覆盖。")
         self._functions[name] = {"description": description, "func": func}
 ```
 

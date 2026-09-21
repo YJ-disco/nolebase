@@ -65,7 +65,7 @@ class MyLLM(HelloAgentsLLM):
 
 ## 流式响应：三个必须处理的细节
 
-`think()` 默认开 `stream=True`。流式返回的每个 chunk 不是完整的响应，而是增量：
+`think()` 默认开 `stream=True`。流式返回的每个 chunk 是增量，而不是完整的响应：
 
 ```python
 def think(self, messages, temperature=0):

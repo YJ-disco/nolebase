@@ -17,7 +17,7 @@ Function Calling 给了模型两件事：能读懂一段 JSON Schema 描述的�
 
 MCP 之前这两端都锁在 SDK 里：OpenAI 用 `parameters`、Claude 用 `input_schema`，每接一个模型平台就重写一遍工具定义（见 [[09-工具系统与 Function Calling]]）。MCP 把工具定义和执行收进 Server，用一套协议暴露出去，模型侧只要支持 MCP 就能复用。
 
-**所以 MCP 的定位不是「更强的工具调用」，而是「工具调用的可移植层」。**
+**所以 MCP 的定位是「工具调用的可移植层」，而不是「更强的工具调用」。**
 
 ## 二、架构与四条设计原则
 
@@ -346,7 +346,7 @@ Resources 由 **URI 唯一标识**（RFC 3986）。服务器**必须**声明 `re
   "result": {
     "resourceTemplates": [
       { "uriTemplate": "file:///{path}", "name": "Project Files",
-        "title": "📁 Project Files", "description": "Access files in the project directory",
+        "title": "Project Files", "description": "Access files in the project directory",
         "mimeType": "application/octet-stream" }
     ],
     "nextCursor": "next-page-cursor"
@@ -572,7 +572,7 @@ nextCursor 存在就继续带它请求，不存在就是最后一页
 4. 接收方**可以**忽略取消（请求未知 / 已完成 / 本身不可取消）
 5. 发出取消的一方**应该**忽略之后才到达的响应
 
-因为网络延迟，取消通知可能在处理完成后、甚至响应已发出后才到达——**双方都必须优雅处理这个竞态**。取消不保证「已经停下」。
+因为网络延迟，取消通知可能在处理完成后、甚至响应已发出后才到达——**双方都必须妥善处理这个竞态**。取消不保证「已经停下」。
 
 ### 进度
 

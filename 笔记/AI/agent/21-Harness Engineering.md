@@ -149,7 +149,7 @@ LangChain 公开的 harness 组件里有两个值得记的：
 
 **`LoopDetectionMiddleware` 是 [[02-Agent Loop|Agent Loop]] 里「重复动作检测」的一个具体实现**——区别在于它检测的粒度是「同一文件被反复改」，而不是「同一工具被反复调」。后者看不出来的循环，前者能看出来。
 
-**一组值得记的对照数据**：LangChain 团队用同一个模型（Claude Opus 4.6）测试，在**早期版本的 harness** 下跑出 **59.6%**——有竞争力但不如 Codex。**原因不是模型差，而是那个 harness 还没跑过同等轮次的迭代改善循环。**
+**一组值得记的对照数据**：LangChain 团队用同一个模型（Claude Opus 4.6）测试，在**早期版本的 harness** 下跑出 **59.6%**——有竞争力但不如 Codex。**原因是那个 harness 还没跑过同等轮次的迭代改善循环，而不是模型差。**
 
 OpenAI 那边的做法是：**自定义 linter + 结构测试 + 「垃圾回收」**（后者的目标对应上面说的「熵管理」）。
 
@@ -172,7 +172,7 @@ Task Rules          单次任务约束
 
 **人类经验仍然是一个不可替代的「隐式 harness」。**
 
-> 目标不是消灭人，而是**把人的注意力导向最重要的地方**——这也和 [[24-LLM Evaluation 与反馈闭环|LLM Evaluation 与反馈闭环]] 里「减少人需要 review 的数据量」是同一个思路。
+> 目标是**把人的注意力导向最重要的地方**，而不是消灭人——这也和 [[24-LLM Evaluation 与反馈闭环|LLM Evaluation 与反馈闭环]] 里「减少人需要 review 的数据量」是同一个思路。
 
 **Harness Engineering 是一个持续的工程实践，不是一次性的配置。** 它和 [[18-Context Engineering|Context Engineering]] 的关系是：**harness engineering 是应用于编码 agent 的一种特定形式的上下文工程。**
 
