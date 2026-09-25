@@ -153,12 +153,12 @@ $$\text{加速比} \approx \frac{\text{平均接受长度} + 1}{1} \times \frac{
 
 ## 参考
 
-- **Fast Inference from Transformers via Speculative Decoding**（Leviathan et al., ICML 2023 oral，修正拒绝采样的原始出处）：https://arxiv.org/abs/2211.17192
-- **Accelerating Large Language Model Decoding with Speculative Sampling**（Chen et al., DeepMind，同期独立提出）：https://arxiv.org/abs/2302.01318
-- **SpecInfer: Accelerating Generative LLM Serving with Tree-based Speculative Inference**（ASPLOS 2024）：https://arxiv.org/abs/2305.09781
-- **Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads**：https://arxiv.org/abs/2401.10774
-- **EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty**：https://arxiv.org/abs/2401.15077
-- **EAGLE-3: Scaling up Inference Acceleration via Training-Time Test**（NeurIPS 2025）：https://arxiv.org/abs/2503.01840
-- **vLLM — Speculative Decoding 文档**（N-gram / EAGLE / draft 模型的配置）：https://docs.vllm.ai/en/latest/features/spec_decode.html
-- **拒绝采样公式、SpecInfer / Medusa / EAGLE 的加速比与 EAGLE-3 的 0.82 / 4.5 数据、生产采用现状**：来自维基百科条目与第三方技术分析，**属二手整理**，公式部分已与 Leviathan 原论文口径核对：https://en.wikipedia.org/wiki/Speculative_decoding ｜ https://aiengineeringfromscratch.com/lesson.html?path=phases/10-llms-from-scratch/25-speculative-decoding
-- **speculation budget 的 ridge point 数字（591 / 412 / 562 FLOP/Byte）**：第三方分析，**按 H100 / H200 / B200 官方规格可自行复核**：https://www.thesoftwarefrontier.com/p/decode-is-memory-bound-speculation
+- https://arxiv.org/abs/2211.17192
+- https://arxiv.org/abs/2302.01318
+- https://arxiv.org/abs/2305.09781
+- https://arxiv.org/abs/2401.10774
+- https://arxiv.org/abs/2401.15077
+- https://arxiv.org/abs/2503.01840
+- https://docs.vllm.ai/en/latest/features/spec_decode.html
+- 来自维基百科条目与第三方技术分析，**属二手整理**，公式部分已与 Leviathan 原论文口径核对：https://en.wikipedia.org/wiki/Speculative_decoding ｜ https://aiengineeringfromscratch.com/lesson.html?path=phases/10-llms-from-scratch/25-speculative-decoding
+- 第三方分析，**按 H100 / H200 / B200 官方规格可自行复核**：https://www.thesoftwarefrontier.com/p/decode-is-memory-bound-speculation

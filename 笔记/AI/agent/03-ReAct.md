@@ -16,11 +16,11 @@ ReAct 之前的方法分两类，各缺一半：
 | 纯思考 | 思维链（CoT） | 无法与外部世界交互，**只能从参数化记忆里回忆，因而会幻觉** |
 | 纯行动 | 直接输出动作 | 没有工作记忆来规划、追踪进度或从错误里恢复 |
 
-ReAct 的出发点是：**思考与行动相辅相成**——思考指导行动（诱导/追踪/调整计划），行动又反过来校正思考（带回外部事实）。原论文的说法是 `reason to act` 与 `act to reason`。
+ReAct 的出发点是：**思考与行动相辅相成**——思考指导行动（诱导/追踪/调整计划），行动又反过来校正思考（带回外部事实）。两个方向的提法是 `reason to act` 与 `act to reason`。
 
 ## 一个容易被忽略的设计：动作空间被扩展了
 
-原论文把智能体的决策形式化为在 **`A ∪ L`** 中选择——`A` 是环境动作集合，`L` 是语言空间。也就是说：
+智能体的决策被形式化为在 **`A ∪ L`** 中选择——`A` 是环境动作集合，`L` 是语言空间。也就是说：
 
 > **产生一条 Thought 本身也是一次 action。**
 
@@ -107,7 +107,7 @@ History: {history}
 
 四个组成部分各司其职：角色定义、工具清单、格式规约（最重要——它强制输出结构化，代码才能精确解析意图）、动态上下文（原始问题 + 累积历史）。
 
-**原论文用的是 few-shot 而非 zero-shot**：HotpotQA 配 6 个示例、FEVER 配 3 个、ALFWorld 配 2 个、WebShop 配 1 个。这解释了它那句限制——「方法依赖语言模型仅从少量示例中就学会推理格式和领域动作空间」。
+**用的是 few-shot 而非 zero-shot**：HotpotQA 配 6 个示例、FEVER 配 3 个、ALFWorld 配 2 个、WebShop 配 1 个。这解释了它那句限制——「方法依赖语言模型仅从少量示例中就学会推理格式和领域动作空间」。
 
 ## 输出解析
 
@@ -156,7 +156,7 @@ def _parse_action(self, action_text: str):
 
 **三件事必须一起看**：
 
-1. **单独用 ReAct 在 HotpotQA 上略输 CoT（27.4 vs 29.4）。** 原论文的解释是：受限的结构提高了推理错误率，而无信息量的搜索会把推理带偏。但在 FEVER 上 ReAct 反超 CoT（60.9 vs 56.3）。
+1. **单独用 ReAct 在 HotpotQA 上略输 CoT（27.4 vs 29.4）。** 一种解释是：受限的结构提高了推理错误率，而无信息量的搜索会把推理带偏。但在 FEVER 上 ReAct 反超 CoT（60.9 vs 56.3）。
 2. **最好的结果来自 ReAct + CoT 的结合（35.1 / 64.6）**——在内部知识和外部获取的信息之间来回。
 3. **交互式任务上的差距最大**：ALFWorld 上 ReAct 用 **2 个示例**达到 71%，而模仿学习基线用约 10 万条样本只有 37%——**绝对提升 34 个百分点**。WebShop 上提升 10 个百分点（40 vs 29.1）。ReAct 不宣称打败全监督基线（HotpotQA/ FEVER 上差得远），它证明的是：**prompting + 几个示例就补上了大部分需要 GPU-months 训练才能达到的差距，而在交互任务上直接反超。**
 
@@ -180,7 +180,7 @@ def _parse_action(self, action_text: str):
 
 ## 一条被忽视的实用特性：人可以改轨迹
 
-原论文还做了一组实验：允许人类检查者**直接编辑 ReAct 的推理轨迹**（把一句幻觉换成人写的提示），ReAct 随后就能按编辑后的方向继续，成功完成任务。
+另有一组实验：允许人类检查者**直接编辑 ReAct 的推理轨迹**（把一句幻觉换成人写的提示），ReAct 随后就能按编辑后的方向继续，成功完成任务。
 
 在一个 ALFWorld 的例子里，轨迹因为第 17 步的幻觉而失败；人类编辑了第 17 和第 23 步两条推理后，ReAct 产生了正确行为。
 
@@ -195,7 +195,7 @@ def _parse_action(self, action_text: str):
 | **工具协同**：LLM 负责运筹帷幄，工具负责具体执行 | **提示词脆弱**：模板里微小用词差异都会影响行为，且并非所有模型都能稳定遵循格式 |
 | 突破单一 LLM 在知识时效性、计算准确性上的固有局限 | **可能陷入局部最优**：步进决策缺乏全局长远规划，可能在原地打转 |
 
-原论文自己也列了三条方法层面的限制：**长时程任务会超出上下文预算**；推理轨迹**不保证忠实反映模型真实的计算过程**（thought 是「说出来的理由」，不一定是「实际的理由」）；性能对**搜索质量、解码策略、提示示例、动作空间设计**都敏感。
+三条方法层面的限制：**长时程任务会超出上下文预算**；推理轨迹**不保证忠实反映模型真实的计算过程**（thought 是「说出来的理由」，不一定是「实际的理由」）；性能对**搜索质量、解码策略、提示示例、动作空间设计**都敏感。
 
 ## 调试的五条入手点
 
@@ -220,9 +220,9 @@ def _parse_action(self, action_text: str):
 
 ## 参考
 
-- 来源：《Hello-Agents》第四章 §4.1–§4.2
+- 《Hello-Agents》第四章 §4.1–§4.2
 - Yao, S., et al. ReAct: Synergizing Reasoning and Acting in Language Models. arXiv:2210.03629, ICLR 2023.
-- **官方实验数据与人机编辑实验**：https://research.google/blog/react-synergizing-reasoning-and-acting-in-language-models/
-- 失败模式分布（search error 23% / reasoning error 13% / hallucination 6% / label ambiguity 5% / other 3%）与 CoT 幻觉率 56%：https://awesome.papernotes.org/en/era4_foundation_models/2022_react
-- 方法定位（A ∪ L 动作空间、与 agentic RL 的关系、无 RL）：https://huggingface.co/datasets/rl-llm-wiki/knowledge-base/discussions/188/files
-- ALFWorld / WebShop 对比数字与论文自陈的限制：https://paperswelove.org/papers/react-synergizing-reasoning-and-acting-in-language-24dd3c33
+- https://research.google/blog/react-synergizing-reasoning-and-acting-in-language-models/
+- https://awesome.papernotes.org/en/era4_foundation_models/2022_react
+- https://huggingface.co/datasets/rl-llm-wiki/knowledge-base/discussions/188/files
+- https://paperswelove.org/papers/react-synergizing-reasoning-and-acting-in-language-24dd3c33

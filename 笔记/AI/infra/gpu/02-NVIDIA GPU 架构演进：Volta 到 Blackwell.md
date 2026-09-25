@@ -268,11 +268,11 @@ GB200 把 NVIDIA 自研的 Grace ARM CPU 与 Blackwell GPU 通过 NVLink-C2C 封
 
 ## 参考
 
-- **NVIDIA Hopper 架构深入解析**（A100 / H100 SXM5 / H100 PCIe 的逐项规格对照，本笔记 SXM 与 PCIe 差异一节的来源）：https://blogs.nvidia.com.tw/blog/nvidia-hopper-architecture-in-depth/
-- **NVIDIA Hopper Architecture Whitepaper**（FP8 / Transformer Engine / TMA / Thread Block Cluster）：https://resources.nvidia.com/en-us-tensor-core/gtc22-whitepaper-hopper
-- **NVIDIA Blackwell Architecture Technical Brief**（双芯封装、FP4、NVLink 5.0、TMEM）：https://www.nvidia.com/en-us/data-center/technologies/blackwell-architecture/
-- **NVIDIA A100 / V100 / V100 Whitepapers**：https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvidia-ampere-architecture-whitepaper.pdf ｜ https://images.nvidia.com/content/volta-architecture/pdf/volta-architecture-whitepaper.pdf
-- **NVIDIA Transformer Engine Documentation**：https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/index.html
-- **NVIDIA Multi-Instance GPU User Guide**：https://docs.nvidia.com/datacenter/tesla/mig-user-guide/
-- **NVIDIA NVLink and NVSwitch**：https://www.nvidia.com/en-us/data-center/nvlink/
-- **AIInfraGuide 5.1 NVIDIA GPU 架构演进**（来源教程；B200 算力口径一处已按架构推导修正）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%80-%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86/gpu/nvidia-gpu-evolution
+- https://blogs.nvidia.com.tw/blog/nvidia-hopper-architecture-in-depth/
+- https://resources.nvidia.com/en-us-tensor-core/gtc22-whitepaper-hopper
+- https://www.nvidia.com/en-us/data-center/technologies/blackwell-architecture/
+- https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvidia-ampere-architecture-whitepaper.pdf ｜ https://images.nvidia.com/content/volta-architecture/pdf/volta-architecture-whitepaper.pdf
+- https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/index.html
+- https://docs.nvidia.com/datacenter/tesla/mig-user-guide/
+- https://www.nvidia.com/en-us/data-center/nvlink/
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%80-%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86/gpu/nvidia-gpu-evolution

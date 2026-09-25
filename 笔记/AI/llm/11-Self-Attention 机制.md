@@ -251,12 +251,12 @@ $$\text{总计} = \underbrace{8Nd^2}_{\text{投影}} + \underbrace{4N^2 d}_{\tex
 
 ## 参考
 
-- **AIInfraGuide 3.3 Self-Attention 机制深入理解**（Attention 演进、QKV 类比、五步推导、$\sqrt{d_k}$ 的方差证明、Online Softmax、多头参数量、MHA/MQA/GQA/MLA 对照、Causal Mask、FLOPs 分解）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%80-%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86/transformer/33-self-attention%E6%9C%BA%E5%88%B6%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3
-- **Attention Is All You Need**（Scaled Dot-Product Attention 的原始定义）：https://arxiv.org/abs/1706.03762
-- **Neural Machine Translation by Jointly Learning to Align and Translate**（Bahdanau Attention）：https://arxiv.org/abs/1409.0473
-- **Effective Approaches to Attention-based Neural Machine Translation**（Luong Attention）：https://arxiv.org/abs/1508.04025
-- **Fast Transformer Decoding: One Write-Head is All You Need**（MQA）：https://arxiv.org/abs/1911.02150
-- **GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints**：https://arxiv.org/abs/2305.13245
-- **DeepSeek-V2**（MLA 与 93.3% 压缩率）：https://arxiv.org/abs/2405.04434
-- **Online normalizer calculation for softmax**（Online Softmax）：https://arxiv.org/abs/1805.02867
-- **FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness**：https://arxiv.org/abs/2205.14135
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%80-%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86/transformer/33-self-attention%E6%9C%BA%E5%88%B6%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3
+- https://arxiv.org/abs/1706.03762
+- https://arxiv.org/abs/1409.0473
+- https://arxiv.org/abs/1508.04025
+- https://arxiv.org/abs/1911.02150
+- https://arxiv.org/abs/2305.13245
+- https://arxiv.org/abs/2405.04434
+- https://arxiv.org/abs/1805.02867
+- https://arxiv.org/abs/2205.14135

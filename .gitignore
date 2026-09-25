@@ -17,6 +17,7 @@
 # Temporary files
 
 .temp
+.vitepress
 
 # Nuxt
 

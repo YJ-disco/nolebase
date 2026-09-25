@@ -148,8 +148,8 @@ llm = LLM(
 
 ## 参考
 
-- **FlashAttention**（IO 感知 Attention 的原始论文，后端设计的理论来源）：Dao et al., https://arxiv.org/abs/2205.14135
-- **vLLM Design — torch.compile Integration**（`splitting_ops`、三种子图、Piecewise CUDA Graph）：https://docs.vllm.ai/en/latest/design/torch_compile.html
-- **vLLM V1 发布说明**（Piecewise CUDA Graph、FlashAttention 3）：https://blog.vllm.ai/2025/01/27/v1-alpha-release.html
-- **NVIDIA Developer Blog — Getting Started with CUDA Graphs**（录制/重放机制）：https://developer.nvidia.com/blog/cuda-graphs/
-- **AIInfraGuide 2.5 Attention 后端与图优化**（CPU launch 瓶颈、不透明算子、三种子图、编译缓存）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E5%9B%9B-%E6%8E%A8%E7%90%86%E4%BC%98%E5%8C%96/%E7%AC%AC2%E7%AB%A0-%E6%8E%A8%E7%90%86%E5%BC%95%E6%93%8E%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF/25-attention-%E5%90%8E%E7%AB%AF%E4%B8%8E%E5%9B%BE%E4%BC%98%E5%8C%96
+- Dao et al., https://arxiv.org/abs/2205.14135
+- https://docs.vllm.ai/en/latest/design/torch_compile.html
+- https://blog.vllm.ai/2025/01/27/v1-alpha-release.html
+- https://developer.nvidia.com/blog/cuda-graphs/
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E5%9B%9B-%E6%8E%A8%E7%90%86%E4%BC%98%E5%8C%96/%E7%AC%AC2%E7%AB%A0-%E6%8E%A8%E7%90%86%E5%BC%95%E6%93%8E%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF/25-attention-%E5%90%8E%E7%AB%AF%E4%B8%8E%E5%9B%BE%E4%BC%98%E5%8C%96

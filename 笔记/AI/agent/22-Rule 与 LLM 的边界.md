@@ -128,8 +128,8 @@ Unknown Case → Stop    → Ask User / Human Review
 
 ## 参考
 
-- **冲突解决的四种策略、拒绝优先的理由与可增量演进性、部署前的冲突分析**：https://www.authensor.com/learn/policy-conflict-resolution-in-ai-systems
-- 特异性作为冲突解决策略的定义（「前置条件数量最多」、用于捕获例外） ：https://handwiki.org/wiki/Conflict_resolution_strategy
-- **Drools 的 Salience + LIFO 默认、三阶段执行、「不要指望规则按特定顺序触发」的实践原则、agenda groups**：https://docs.drools.org/6.5.0.Final/drools-docs/html/ch07.html
-- **Grule 的冲突集伪代码、循环次数上限、默认 salience 0、map 不保序**：https://github.com/hyperjumptech/grule-rule-engine/blob/master/docs/en/RuleEngine_en.md
-- 三阶段算法（匹配 / 冲突解决 / 动作）与「动作可断言新事实」：https://learn.microsoft.com/zh-cn/biztalk/core/condition-evaluation-and-action-execution
+- https://www.authensor.com/learn/policy-conflict-resolution-in-ai-systems
+- https://handwiki.org/wiki/Conflict_resolution_strategy
+- https://docs.drools.org/6.5.0.Final/drools-docs/html/ch07.html
+- https://github.com/hyperjumptech/grule-rule-engine/blob/master/docs/en/RuleEngine_en.md
+- https://learn.microsoft.com/zh-cn/biztalk/core/condition-evaluation-and-action-execution

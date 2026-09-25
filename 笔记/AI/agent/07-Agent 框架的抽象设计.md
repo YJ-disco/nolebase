@@ -181,4 +181,4 @@ class Agent(ABC):
 
 ## 参考
 
-- 来源：《Hello-Agents》第七章 §7.1、§7.3、§7.4
+- 《Hello-Agents》第七章 §7.1、§7.3、§7.4

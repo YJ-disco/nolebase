@@ -7,7 +7,7 @@ tags:
 
 WAS（SOSP 2011）是微软的云存储，2008 年 11 月起在生产环境运行。它在这条线上的位置很特殊：**前面几篇里"高可用"和"强一致"基本是二选一**（[Dynamo](03-Dynamo.md) 选 AP、[Spanner](04-Spanner 与 F1.md) 用时钟设施把强一致买回来），而 WAS 的标题就直接写着 "**with Strong Consistency**" —— 它靠的是**把强一致限定在一个层次里做，把可用性交给另一层**。
 
-论文给了一个真实负载作为规模锚点：Windows Azure 上的**摄入引擎**（为 Facebook 与 Twitter 做近实时搜索，是 Bing 管道的一部分，**在用户发帖后 15 秒内让内容可被公开搜索到**）—— 它在 WAS 里存**约 350 TB 数据（复制前）**，**峰值约 40,000 事务/秒**，**每天 20 到 30 亿次事务**。内容走 Blobs、工作流走 Queues、处理结果与状态走 Tables —— 论文把这个组合称为"我们看到的常见用法模式"。
+一个真实负载作为规模锚点：Windows Azure 上的**摄入引擎**（为 Facebook 与 Twitter 做近实时搜索，是 Bing 管道的一部分，**在用户发帖后 15 秒内让内容可被公开搜索到**）—— 它在 WAS 里存**约 350 TB 数据（复制前）**，**峰值约 40,000 事务/秒**，**每天 20 到 30 亿次事务**。内容走 Blobs、工作流走 Queues、处理结果与状态走 Tables —— 这个组合就是常说的用法模式。
 
 ## 两个层级：stamp 与位置服务
 
@@ -17,7 +17,7 @@ WAS（SOSP 2011）是微软的云存储，2008 年 11 月起在生产环境运�
 - **典型 10 到 20 个机架，每机架 18 个磁盘密集型节点**；
 - **第一代 stamp 每个约 2 PB 原始存储，下一代最多 30 PB**。
 
-**利用率目标值得单独记**：论文要把 stamp 维持在**约 70% 利用率**（容量、事务、带宽三个维度），**避免超过 80%**，因为要留 20% 余量给两件事：
+**利用率目标值得单独记**：stamp 要维持在**约 70% 利用率**（容量、事务、带宽三个维度），**避免超过 80%**，因为要留 20% 余量给两件事：
 
 - **磁盘短行程（short stroking）** —— 只用盘的外圈轨道以获得更好的寻道时间与更高吞吐；
 - **机架故障时继续提供容量与可用性**。
@@ -72,7 +72,7 @@ stamp 达到 70% 时，**位置服务用跨 stamp 复制把账号迁到别的 st
 
 Stream Manager（SM）**本身是一个标准 Paxos 集群，且在客户端请求的关键路径之外**。它维护 stream 命名空间、extent 状态与 extent 在 Extent Node（EN）上的分配，职责六条：监控 EN 健康、创建并分配 extent、**惰性再复制**丢失的副本、**垃圾回收**不再被引用的 extent、按策略**调度纠删码编码**。
 
-论文特意交代了 SM 的边界，这些"不做"正是它能扩展的原因：
+SM 的边界交代得很清楚，这些"不做"正是它能扩展的原因：
 
 - **SM 不知道 block，只知道 stream 与 extent**；
 - **它不跟踪每一次 block 追加** —— 因为 block 总数可能极大，**SM 无法扩展到跟踪它们**；
@@ -113,7 +113,7 @@ Stream Manager（SM）**本身是一个标准 Paxos 集群，且在客户端请�
 
 **注意这两条都是"不可变性"保证，不是"最新性"保证。** 流层只承诺"写下去的东西不会变"，**谁是最新的、写入顺序怎么定，全部交给分区层**。这就是"把强一致限定在一层里做"的确切含义。
 
-论文还划了威胁边界：**恶意对手由数据中心、Fabric Controller 与 WAS 的安全机制负责，流复制不处理这类威胁**；而它处理的故障范围是**从磁盘与节点错误到断电、网络问题、位翻转、随机硬件故障，以及软件 bug** —— 这些都会造成数据损坏，**用校验和检测**。
+威胁边界也划得很清楚：**恶意对手由数据中心、Fabric Controller 与 WAS 的安全机制负责，流复制不处理这类威胁**；而它处理的故障范围是**从磁盘与节点错误到断电、网络问题、位翻转、随机硬件故障，以及软件 bug** —— 这些都会造成数据损坏，**用校验和检测**。
 
 ## 分区层：Object Table 与 RangePartition
 
@@ -136,7 +136,7 @@ Stream Manager（SM）**本身是一个标准 Paxos 集群，且在客户端请�
 
 ## 一个顺带发现的性能数字
 
-论文在讲 commit log 时给了一组很说明问题的对比：**不带 journaling 的 commit log stream 平均端到端 append 延迟 30 ms；带 journaling 时平均 append 延迟 6 ms，而且延迟方差显著下降。**
+commit log 那里有一组很说明问题的对比：**不带 journaling 的 commit log stream 平均端到端 append 延迟 30 ms；带 journaling 时平均 append 延迟 6 ms，而且延迟方差显著下降。**
 
 **加一层日志反而快了 5 倍** —— 这条数据本身就是"为什么所有存储系统最后都会在写路径上加一层缓冲日志"的最好注脚，值得和 Aurora 那篇的"日志即数据库"并读。
 
@@ -179,4 +179,4 @@ Stream Manager（SM）**本身是一个标准 Paxos 集群，且在客户端请�
 
 ## 参考
 
-- Brad Calder, Ju Wang, Aaron Ogus, Niranjan Nilakantan, Arild Skjolsvold, Sam McKelvie, Yikang Xu, Shashwat Srivastava, Jiesheng Wu, Huseyin Simitci, Jaidev Haridas, Chakravarthy Uddaraju, Hemal Khatri, Andrew Edwards, Vaman Bedekar, Shane Mainali, Rafay Abbasi, Arpit Agarwal, Mian Fahim ul Haq, Muhammad Ikram ul Haq, Deepali Bhardwaj, Sowmya Dayanand, Anitha Adusumilli, Marvin McNett, Sriram Sankaran, Kavitha Manivannan, Leonidas Rigas. *Windows Azure Storage: A Highly Available Cloud Storage Service with Strong Consistency*. SOSP 2011.（stamp 构成与利用率目标、LS 与账号迁移、三层分工、流层的 block/extent/stream/seal 与 SM 的职责边界、复制流程与"为什么不用 lease"、multi-block append 的契约、流层给分区层的两条不可变性保证、Object Table 与 RangePartition、journaling 的延迟对比）
+- B. Calder, J. Wang, A. Ogus, N. Nilakantan, A. Skjolsvold, S. McKelvie, Y. Xu, S. Srivastava, J. Wu, H. Simitci, J. Haridas, C. Uddaraju, H. Khatri, A. Edwards, V. Bedekar, S. Mainali, R. Abbasi, A. Agarwal, M. F. ul Haq, M. I. ul Haq, D. Bhardwaj, S. Dayanand, A. Adusumilli, M. McNett, S. Sankaran, K. Manivannan, L. Rigas. *Windows Azure Storage: A Highly Available Cloud Storage Service with Strong Consistency*. SOSP 2011.

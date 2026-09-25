@@ -49,7 +49,7 @@ tags:
 
 > **Continuous Batching 把 GPU 利用率从约 30% 拉到 80% 以上。** 收益分两块：完成的请求立刻退出，不再空转；新请求立刻补位，不必等整批结束，排队延迟也大幅下降。
 
-术语归属值得记清楚：**这个机制最早是 Orca 在 OSDI 2022 提出的**，论文称之为 iteration-level scheduling；Orca 报告在同等延迟下相对 FasterTransformer 最高 **36.9×** 吞吐。「Continuous Batching」是这套细粒度调度哲学在工程界的通行叫法，TensorRT-LLM 文档里叫 in-flight batching，TGI 从 0.9（2023）起也实现了同一模型。
+术语归属值得记清楚：**这个机制最早是 Orca 在 OSDI 2022 提出的**，这被称为 iteration-level scheduling；Orca 报告在同等延迟下相对 FasterTransformer 最高 **36.9×** 吞吐。「Continuous Batching」是这套细粒度调度哲学在工程界的通行叫法，TensorRT-LLM 文档里叫 in-flight batching，TGI 从 0.9（2023）起也实现了同一模型。
 
 ## 三、一次调度循环里发生什么
 
@@ -219,9 +219,9 @@ def schedule(self):
 
 ## 参考
 
-- **Orca**（iteration-level scheduling 的提出者）：Yu et al., *Orca: A Distributed Serving System for Transformer-Based Generative Models*, OSDI 2022，https://www.usenix.org/conference/osdi22/presentation/yu
-- **SARATHI**（Chunked Prefill 的来源）：Agrawal et al., *SARATHI: Efficient LLM Inference by Piggybacking Decodes with Chunked Prefills*，https://arxiv.org/abs/2308.16369
-- **vLLM V1 发布说明**（统一 Token 预算调度器、`{request_id: num_tokens}` 表示）：https://blog.vllm.ai/2025/01/27/v1-alpha-release.html
-- **vLLM V1 源码**（`Scheduler.schedule()` 的两队列与预算截断逻辑）：https://github.com/vllm-project/vllm/blob/main/vllm/v1/core/sched/scheduler.py
-- **vLLM Optimization and Tuning**（`max_num_batched_tokens` / `max_num_seqs` 的调优口径）：https://docs.vllm.ai/en/latest/configuration/optimization.html
-- **AIInfraGuide 2.2 Continuous Batching / 2.4 Chunked Prefill**（利用率 30%→80%、Pre 干扰机制、预算截断即切块）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E5%9B%9B-%E6%8E%A8%E7%90%86%E4%BC%98%E5%8C%96/%E7%AC%AC2%E7%AB%A0-%E6%8E%A8%E7%90%86%E5%BC%95%E6%93%8E%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF/22-continuous-batching
+- Yu et al., *Orca: A Distributed Serving System for Transformer-Based Generative Models*, OSDI 2022，https://www.usenix.org/conference/osdi22/presentation/yu
+- Agrawal et al., *SARATHI: Efficient LLM Inference by Piggybacking Decodes with Chunked Prefills*，https://arxiv.org/abs/2308.16369
+- https://blog.vllm.ai/2025/01/27/v1-alpha-release.html
+- https://github.com/vllm-project/vllm/blob/main/vllm/v1/core/sched/scheduler.py
+- https://docs.vllm.ai/en/latest/configuration/optimization.html
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E5%9B%9B-%E6%8E%A8%E7%90%86%E4%BC%98%E5%8C%96/%E7%AC%AC2%E7%AB%A0-%E6%8E%A8%E7%90%86%E5%BC%95%E6%93%8E%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF/22-continuous-batching

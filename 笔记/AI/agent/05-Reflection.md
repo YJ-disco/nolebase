@@ -32,7 +32,7 @@ Reflexion 的做法是把环境反馈**翻译成一段自然语言的自我反�
           下次我应该在使用任何变量之前，先确保它已经被正确初始化。
 ```
 
-论文称之为 **Verbal Reinforcement（语言强化）**，那段话的作用相当于**语义梯度（semantic gradient）**——它明确指出了「下降」的方向。
+这被称为 **Verbal Reinforcement（语言强化）**，那段话的作用相当于**语义梯度（semantic gradient）**——它明确指出了「下降」的方向。
 
 代价对比一目了然：
 
@@ -186,10 +186,10 @@ class Memory:
 
 ## 三条局限
 
-论文自己与后续分析都指出的边界：
+一条边界（后续分析也反复提到）：
 
 1. **效果上限取决于反思者的能力。** 如果 LLM 本身「固执」或推理能力不足，它生成的反思可能无效甚至误导——**用同一把尺子量同一块布，很难量出自己的盲区**。这也是 [[24-LLM Evaluation 与反馈闭环|LLM Evaluation 与反馈闭环]] 里「同源盲区」要单独处理的原因。
-2. **可能陷入局部最优。** Agent 反思出一种「还行」的策略后就一直在这条路上小修小补，跳不出去探索全局更优解。**论文在 WebShop 上就没拿到显著提升**——那个任务需要更多样化、更有创造性的探索行为，而不是对既有策略的微调。
+2. **可能陷入局部最优。** Agent 反思出一种「还行」的策略后就一直在这条路上小修小补，跳不出去探索全局更优解。**在 WebShop 上就没有显著提升**——那个任务需要更多样化、更有创造性的探索行为，而不是对既有策略的微调。
 3. **没有收敛保证。**
 
 这三条合起来给出一条判据：**Reflection 擅长「把一个方向上的解做好」，不擅长「换一个方向」。**
@@ -202,8 +202,8 @@ class Memory:
 
 ## 参考
 
-- 来源：《Hello-Agents》第四章 §4.4
+- 《Hello-Agents》第四章 §4.4
 - Shinn, N., Cassano, F., Yao, S., et al. Reflexion: Language Agents with Verbal Reinforcement Learning. arXiv:2303.11366, NeurIPS 2023.
-- 三个组件、记忆 k=3、Evaluator 三种形态、HumanEval 91% / ALFWorld 97% / HotPotQA 32→53、消融实验与三条局限：https://www.sohu.com/a/1078305796_122105141
-- 各基准的完整 pass@1 对照表（含 MBPP 反而下降）：同上
-- 记忆两层结构与工作流：https://news.qq.com/rain/a/20250929A07UAL00
+- https://www.sohu.com/a/1078305796_122105141
+- 同上
+- https://news.qq.com/rain/a/20250929A07UAL00

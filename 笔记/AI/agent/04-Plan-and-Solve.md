@@ -26,7 +26,7 @@ tags:
 
 ### Zero-shot-CoT 的三个缺陷
 
-论文指出「Let's think step by step」有三类失败：
+「Let's think step by step」有三类失败：
 
 | 缺陷 | 表现 |
 | --- | --- |
@@ -86,7 +86,7 @@ Then, let's carry out the plan to solve the problem step by step.
 
 > **PS 治的是「步骤走偏」，治不了「题意理解错」。** 题读错了，计划再完整也没用——这条判据决定了什么时候不该指望 PS。
 
-配套的相关性分析印证了这一点：**变量定义的存在与计划的存在，都与计算错误、漏步错误呈负相关**。另外，随机抽 100 例检查，**90 例的预测里确实出现了计划**——说明当代模型（论文用的是 GPT-3.5/GPT-4 代）已经具备被提示出来的规划能力。
+配套的相关性分析印证了这一点：**变量定义的存在与计划的存在，都与计算错误、漏步错误呈负相关**。另外，随机抽 100 例检查，**90 例的预测里确实出现了计划**——说明当代模型（实验用的是 GPT-3.5/GPT-4 代）已经具备被提示出来的规划能力。
 
 ### 两条使用边界
 
@@ -203,9 +203,9 @@ final_answer = response_text
 
 ## 参考
 
-- 来源：《Hello-Agents》第四章 §4.3
+- 《Hello-Agents》第四章 §4.3
 - Wang, L., et al. Plan-and-Solve Prompting: Improving Zero-Shot Chain-of-Thought Reasoning by Large Language Models. arXiv:2305.04091, 2023.
-- **论文原文（错误类型分布、相关性分析、计划存在率、提示模板）**：https://ar5iv.labs.arxiv.org/html/2305.04091
-- 准确率表（六个数学数据集）：https://tomesphere.com/paper/2305.04091
-- PS / PS+ 提示模板与三条附加指令：https://spaceservices.org/learn/chain-of-thought-reasoning
-- 粒度权衡与不同模型上增益不一致：https://www.emergentmind.com/topics/plan-and-solve-prompting
+- https://ar5iv.labs.arxiv.org/html/2305.04091
+- https://tomesphere.com/paper/2305.04091
+- https://spaceservices.org/learn/chain-of-thought-reasoning
+- https://www.emergentmind.com/topics/plan-and-solve-prompting

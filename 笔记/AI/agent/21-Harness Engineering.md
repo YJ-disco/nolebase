@@ -201,10 +201,10 @@ Task Rules          单次任务约束
 
 ## 参考
 
-- Mitchell Hashimoto 命名与定义、OpenAI Lopopolo 文章与百万行实验数据、Thoughtworks 时间线：https://blog.csdn.net/aidoudoulong/article/details/164332156
-- **Böckeler 的完整框架（三个同心圆、guides/sensors 两轴、computational/inferential 两形态、三类调控目标、Ashby 定律、harnessability、harness templates、高层问题拦不住、与上下文工程的关系）**：https://www.thekb.eu/en/fiches/boeckeler-harness-engineering-coding-agents-2026-04-02
-- **同心圆的表述、guides/sensors 的互补性、正向 prompt injection、shift left、Ashby 定律的应用**：https://dev.to/raminjafary/the-rise-of-agentic-engineering-part-5-harness-engineering-emerges-2d9o
-- **harness 的四个层级（generic / project / domain / delivery）、self-correction loop、项目 harness 是改造起点**：https://www.analytical-software.de/?p=17686/
-- **LangChain 的 LocalContextMiddleware 与 LoopDetectionMiddleware、59.6% 的对照、Osmani 的「harness 差距」表述、OpenAI 的 linter + 结构测试 + 垃圾回收**：https://tenten.co/learning/harness-engineering/
-- 三层结构与「三大支柱」说法：https://ima.qq.com/wiki/ 分享的《从手动喂 Prompt 到 Harness 工程》一文
-- Harness 官方博客对 agent harness「模型之外的一切」的表述：https://www.harness.io/blog/ai-writes-the-code-who-delivers-it-safely
+- https://blog.csdn.net/aidoudoulong/article/details/164332156
+- https://www.thekb.eu/en/fiches/boeckeler-harness-engineering-coding-agents-2026-04-02
+- https://dev.to/raminjafary/the-rise-of-agentic-engineering-part-5-harness-engineering-emerges-2d9o
+- https://www.analytical-software.de/?p=17686/
+- https://tenten.co/learning/harness-engineering/
+- https://ima.qq.com/wiki/ 分享的《从手动喂 Prompt 到 Harness 工程》一文
+- https://www.harness.io/blog/ai-writes-the-code-who-delivers-it-safely

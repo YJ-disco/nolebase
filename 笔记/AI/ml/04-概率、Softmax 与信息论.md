@@ -208,7 +208,7 @@ Top-p 的集合大小随分布尖锐程度自动变化 —— 这是它成为多
 
 ## 参考
 
-- **AIInfraGuide 第2章 §4–5**（概率分布、链式法则、期望方差、稳定 Softmax、LogSumExp、交叉熵与 KL 的关系、PPL、top-k/top-p）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%80-%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86/%E7%AC%AC2%E7%AB%A0-%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80
-- **Deep Learning Book — Probability and Information Theory**：https://www.deeplearningbook.org/contents/prob.html
-- **PyTorch Numerical Accuracy**（`log_softmax` 与融合实现的口径）：https://docs.pytorch.org/docs/stable/notes/numerical_accuracy.html
-- **Attention Is All You Need**（除以 $\sqrt{D_h}$ 的方差推导在 [[11-Self-Attention 机制]] 展开）：https://arxiv.org/abs/1706.03762
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%80-%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86/%E7%AC%AC2%E7%AB%A0-%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80
+- https://www.deeplearningbook.org/contents/prob.html
+- https://docs.pytorch.org/docs/stable/notes/numerical_accuracy.html
+- https://arxiv.org/abs/1706.03762

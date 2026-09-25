@@ -794,7 +794,7 @@ Docker MCP Gateway（把 Server 跑在隔离容器里，管生命周期与凭据
 ## 参考
 
 - MCP 规范（见上「版本说明」的逐页链接）
-- MCP Gateway（Docker）：https://docs.docker.com/ai/mcp-catalog-and-toolkit/mcp-gateway/
-- MCP Gateway 术语与代价分析：https://ossaihub.com/glossary/mcp-gateway
-- 企业侧网关需求与威胁面：https://credal.ai/blog/why-organizations-need-an-mcp-gateway
-- 来源：《Hello-Agents》第十章 §10.1–§10.2
+- https://docs.docker.com/ai/mcp-catalog-and-toolkit/mcp-gateway/
+- https://ossaihub.com/glossary/mcp-gateway
+- https://credal.ai/blog/why-organizations-need-an-mcp-gateway
+- 《Hello-Agents》第十章 §10.1–§10.2

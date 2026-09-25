@@ -201,8 +201,8 @@ $$(a+b)+c \ne a+(b+c)$$
 
 ## 参考
 
-- **AIInfraGuide 第2章 数学基础 §1–3**（三问框架、stride 与布局、四种乘法、秩与低秩、GEMM tiling 的数学依据、算术强度估算）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%80-%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86/%E7%AC%AC2%E7%AB%A0-%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80
-- **Deep Learning Book — Linear Algebra**：https://www.deeplearningbook.org/contents/linear_algebra.html
-- **PyTorch Broadcasting Semantics**（广播规则的确切定义）：https://docs.pytorch.org/docs/stable/notes/broadcasting.html
-- **PyTorch Numerical Accuracy**（`atol` / `rtol` 的口径）：https://docs.pytorch.org/docs/stable/notes/numerical_accuracy.html
-- **LoRA: Low-Rank Adaptation of Large Language Models**（低秩分解的工程应用）：https://arxiv.org/abs/2106.09685
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%80-%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86/%E7%AC%AC2%E7%AB%A0-%E6%95%B0%E5%AD%A6%E5%9F%BA%E7%A1%80
+- https://www.deeplearningbook.org/contents/linear_algebra.html
+- https://docs.pytorch.org/docs/stable/notes/broadcasting.html
+- https://docs.pytorch.org/docs/stable/notes/numerical_accuracy.html
+- https://arxiv.org/abs/2106.09685

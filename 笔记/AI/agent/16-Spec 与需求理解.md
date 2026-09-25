@@ -189,7 +189,7 @@ field2                         field1
 
 ## 参考
 
-- 来源：《客户端 AI Coding 技术面面经》第三节、第四节、第十一节、第十三节
-- **Spec Kit 的完整命令链、约束传递金字塔、spec 技术无关的原因、feature 分支与「spec 是 PR 单元」、`[NEEDS CLARIFICATION]` 机制、tasks 的 `[P]` 标记与典型顺序、已知取舍、生态其他哲学（OpenSpec / BMad / Superpowers / Task Master）**：https://aicodingtools.im/blog/github-spec-kit-guide
-- Spec Kit 五阶段与产物文件名、约束传递金字塔、多 feature 管理、三组矛盾的调和：https://ima.qq.com/wiki/ 分享的《Spec Kit 实战指南》整理
-- 四阶段与 `constitution.md` / `spec.md` / `plan.md` / `tasks.md` 的输入输出：https://ima.qq.com/wiki/ 分享的《GitHub Spec Kit 工作流拆解》
+- 《客户端 AI Coding 技术面面经》第三节、第四节、第十一节、第十三节
+- https://aicodingtools.im/blog/github-spec-kit-guide
+- https://ima.qq.com/wiki/ 分享的《Spec Kit 实战指南》整理
+- https://ima.qq.com/wiki/ 分享的《GitHub Spec Kit 工作流拆解》

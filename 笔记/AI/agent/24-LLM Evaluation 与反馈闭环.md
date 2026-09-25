@@ -273,8 +273,8 @@ judge prompt 本身就是一次提示工程，纪律同源：
 
 ## 参考
 
-- **六种偏差的量化数据（长度偏差 +0.24~+0.44、风格偏差 0.40–0.76 与人类 57% 的对照、自我偏好 51.4%–86.2%、截断配对的 88–100%）、一致性-效度悖论、去偏策略 +4.7/+7.3/+11.5pp、三种评测模式、成对优于绝对分**：https://blog.redlinesoft.net/posts/llm-as-a-judge
-- **pass@k 与 pass^k 的区别、BFCL 的 AST 匹配、人类基线（GAIA 92% / WebArena 78% / VisualWebArena 88.7%）、SWE-bench Verified 弃用、基准组合建议**：https://changegamer.ai/resources/evaluating-ai-agents
-- **聚合 1.7–5.9pp vs 切片 25–91pp、judge 校准流程与 Spearman ≥ 0.80（54 个里 36 个达标）、9 个 judge ≈ 2.0–2.5 独立投票、306 人调查、三种触发、分层门禁、59.4% 缺陷测试、Gaia2 与 τ²-bench 的更替**：https://galileo.ai/blog/agent-evaluation-framework-metrics-rubrics-benchmarks
-- **Judge prompt 的写法、具体性幻觉、Likert vs pairwise 的选型、Zheng et al. 2023 的出处**：https://thepromptbench.com/evals-and-testing/llm-as-judge-explained/
-- 十二类偏差的自动量化框架（CALM）：https://llm-judge-bias.github.io/
+- https://blog.redlinesoft.net/posts/llm-as-a-judge
+- https://changegamer.ai/resources/evaluating-ai-agents
+- https://galileo.ai/blog/agent-evaluation-framework-metrics-rubrics-benchmarks
+- https://thepromptbench.com/evals-and-testing/llm-as-judge-explained/
+- https://llm-judge-bias.github.io/

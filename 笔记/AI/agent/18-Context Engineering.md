@@ -173,8 +173,8 @@ Agent 工作负载 = 执行循环 + 状态常驻
 
 ## 参考
 
-- Context Engineering 术语来源与核心操作：https://aiarch.dev/context-engineering
-- **Prompt Caching 的价格结构（写入 1.25×/2×、读取 0.1×）、TTL 两种、最小阈值 1024/2048–4096、4 个缓存断点、按模型隔离、失效条件、2024-12-05 引入**：https://new.qq.com/rain/a/20240817A00SCC00 、https://baike.baidu.com/item/提示缓存/68102611
-- **Uber 的 TTL 选择依据（交互式会话 1 小时 / 子智能体 5 分钟）、工具 schema 5–7 万 token 每轮重复、CLI 工具解析与工具检索两个解法、9.4× 请求与账单不涨、1000+ MCP 服务器**：https://news.qq.com/rain/a/20260909A07N6O00
-- **Cold prefill / Resume prefill / Short decode 的分解、CPU tool processing 占总延迟最高 90.6%、100 万 token 窗口下缓存未命中代价高、缓存按模型隔离**：https://news.qq.com/rain/a/20260526A0297T00
-- 来源：《客户端 AI Coding 技术面经》相关讨论与《从手动喂 Prompt 到 Harness 工程》
+- https://aiarch.dev/context-engineering
+- https://new.qq.com/rain/a/20240817A00SCC00 、https://baike.baidu.com/item/提示缓存/68102611
+- https://news.qq.com/rain/a/20260909A07N6O00
+- https://news.qq.com/rain/a/20260526A0297T00
+- 《客户端 AI Coding 技术面经》相关讨论与《从手动喂 Prompt 到 Harness 工程》

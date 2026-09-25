@@ -226,11 +226,11 @@ $$W = W_0 + w_1\Delta W_1 + w_2\Delta W_2$$
 
 ## 参考
 
-- **LoRA: Low-Rank Adaptation of Large Language Models**（Hu et al., 2021）：https://arxiv.org/abs/2106.09685
-- **QLoRA: Efficient Finetuning of Quantized LLMs**（Dettmers et al., 2023，NF4 / 双重量化 / 分页优化器）：https://arxiv.org/abs/2305.14314
-- **Parameter-Efficient Transfer Learning for NLP**（Adapter，Houlsby et al., 2019）：https://arxiv.org/abs/1902.00751
-- **Prefix-Tuning: Optimizing Continuous Prompts for Generation**（Li & Liang, 2021）：https://arxiv.org/abs/2101.00190
-- **P-Tuning v2**（Liu et al., 2022）：https://arxiv.org/abs/2110.07602
-- **Intrinsic Dimensionality Explains the Effectiveness of Language Model Fine-Tuning**（低秩假设的实证依据）：https://arxiv.org/abs/2012.13255
-- **DoRA**：https://arxiv.org/abs/2402.09353 ｜ **rsLoRA**：https://arxiv.org/abs/2312.03732
-- **来源**：ting.is-a.dev「LLM 原理」专栏第 05 篇（`scripts/ting-llm-raw/md/`，2026-09-21 抓取）。**该篇的「$12N$」口径漏了 FP32 主权重一项，本笔记按 $16N$ 补全并保留了来源口径**；部分公式在原站转换中退化，已按原论文重建
+- https://arxiv.org/abs/2106.09685
+- https://arxiv.org/abs/2305.14314
+- https://arxiv.org/abs/1902.00751
+- https://arxiv.org/abs/2101.00190
+- https://arxiv.org/abs/2110.07602
+- https://arxiv.org/abs/2012.13255
+- https://arxiv.org/abs/2402.09353 ｜ **rsLoRA**：https://arxiv.org/abs/2312.03732
+- ting.is-a.dev「LLM 原理」专栏第 05 篇（`scripts/ting-llm-raw/md/`，2026-09-21 抓取）。**该篇的「$12N$」口径漏了 FP32 主权重一项，本笔记按 $16N$ 补全并保留了来源口径**；部分公式在原站转换中退化，已按原论文重建

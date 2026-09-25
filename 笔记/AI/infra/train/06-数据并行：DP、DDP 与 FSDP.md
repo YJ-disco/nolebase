@@ -217,8 +217,8 @@ FSDP 用**更多通信**换**更少显存**。
 
 ## 参考
 
-- **AIInfraGuide 4.1 数据并行详解**（同步 SGD 的等价性推导、DP 的三个缺陷、DDP 的 Bucket 机制与死锁坑、超大规模下的 ring latency 限制、FSDP 四策略与 FSDP2、三代显存账本对比表、$2\Psi$ vs $3\Psi$ 的通信量推导、选型决策）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%89-%E5%88%86%E5%B8%83%E5%BC%8F%E8%AE%AD%E7%BB%83/41-%E6%95%B0%E6%8D%AE%E5%B9%B6%E8%A1%8C%E8%AF%A6%E8%A7%A3
-- **PyTorch DDP**（Bucket 机制与 `bucket_cap_mb`）：https://pytorch.org/docs/stable/notes/ddp.html
-- **PyTorch FSDP**（四种 `sharding_strategy` 与 FSDP2）：https://pytorch.org/docs/stable/fsdp.html
-- **ZeRO: Memory Optimizations Toward Training Trillion Parameter Models**：https://arxiv.org/abs/1910.02054
-- **PyTorch FSDP2 / `fully_shard`**：https://pytorch.org/docs/stable/distributed.fsdp.fully_shard.html
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%89-%E5%88%86%E5%B8%83%E5%BC%8F%E8%AE%AD%E7%BB%83/41-%E6%95%B0%E6%8D%AE%E5%B9%B6%E8%A1%8C%E8%AF%A6%E8%A7%A3
+- https://pytorch.org/docs/stable/notes/ddp.html
+- https://pytorch.org/docs/stable/fsdp.html
+- https://arxiv.org/abs/1910.02054
+- https://pytorch.org/docs/stable/distributed.fsdp.fully_shard.html

@@ -228,10 +228,10 @@ $f_t$ 和 $i_t$ 都是 sigmoid 输出，**取值在 (0, 1)**——这正是「�
 
 ## 参考
 
-- 来源：《Hello-Agents》第三章 §3.1.1
+- 《Hello-Agents》第三章 §3.1.1
 - Bengio, Y., et al. A neural probabilistic language model. JMLR, 2003.
-- Elman, J. L. Finding structure in time. Cognitive Science, 1990.（RNN）
-- Hochreiter, S., & Schmidhuber, J. Long short-term memory. Neural Computation, 1997.（LSTM）
-- **困惑度的定义、几何平均形式、「有效选择数」的正确用法、香农熵率与理论下限、各模型的 PTB / WikiText-103 量级、逐项评估要求与局限**：https://sebastianraschka.com/faq/docs/perplexity-what-it-means.html 、https://computationallinguistics.com/Perplexity
-- **Elman RNN 55 / LSTM 43 / bigram 200 / trigram 100–150 的量级对照、1977 年 Jelinek 组的出处、困惑度用于语音与机器翻译**：https://www.aiglossary.xyz/glossary/perplexity
-- **中文文本困惑度的常见范围（50–1000）、N-gram 两缺陷与 NNLM 的建模公式**：https://link.springer.com/content/pdf/10.1007/978-981-92-0682-7_5
+- Elman, J. L. Finding structure in time. Cognitive Science, 1990.
+- Hochreiter, S., & Schmidhuber, J. Long short-term memory. Neural Computation, 1997.
+- https://sebastianraschka.com/faq/docs/perplexity-what-it-means.html 、https://computationallinguistics.com/Perplexity
+- https://www.aiglossary.xyz/glossary/perplexity
+- https://link.springer.com/content/pdf/10.1007/978-981-92-0682-7_5

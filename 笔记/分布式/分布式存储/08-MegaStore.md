@@ -7,14 +7,14 @@ tags:
 
 MegaStore（CIDR 2011）是 Google 在 [Bigtable](02-Bigtable.md) 之上补"跨行事务"的那一层，也是 [Spanner](04-Spanner 与 F1.md) 的直接前身。它的定位用一句话说清：**在细粒度分区内提供完全可串行化的 ACID 语义** —— 而"细粒度分区"这个限制，是它能在广域网上同步复制还保持可接受延迟的原因。
 
-论文开篇把五条互相冲突的需求摊得很清楚，这五条正好解释了为什么它必须走这条路线：
+五条互相冲突的需求恰好解释了为什么它必须走这条路线：
 
-| 需求 | 论文的表述 |
+| 需求 | 具体表述 |
 | --- | --- |
 | **高度可扩展** | 互联网带来巨大潜在用户群；用 MySQL 起步容易，但扩展到数百万用户需要**重做整个存储基础设施** |
 | **快速开发** | 服务要争夺用户，需要快速迭代、快速上市 |
 | **低延迟** | 服务必须响应快 |
-| **一致视图** | 更新的结果要**立即可见且持久** —— 论文的原话：**「看到云上协作表格的编辑短暂消失，是不好的用户体验」** |
+| **一致视图** | 更新的结果要**立即可见且持久** —— 原话：**「看到云上协作表格的编辑短暂消失，是不好的用户体验」** |
 | **高可用** | 用户期待 7×24；要承受从单盘、单机、单路由故障一直到整个数据中心级中断 |
 
 而两条既有路线各有硬伤：**关系数据库**功能丰富便于构建，但**难以扩展到数亿用户**；**NoSQL（Bigtable / HBase / Cassandra）**高度可扩展，但**API 有限、一致性模型松散，让应用开发变复杂**。跨远距离数据中心复制同时保持低延迟已经很困难，**而在故障期间保证复制数据的一致视图尤其困难** —— MegaStore 就是冲这两点去的。
@@ -42,7 +42,7 @@ MegaStore（CIDR 2011）是 Google 在 [Bigtable](02-Bigtable.md) 之上补"跨�
 - 可以依赖**昂贵的两阶段提交**，但**通常利用 Megastore 的异步消息传递** —— 发送组的事务往队列里放一条或多条消息，接收组的事务**原子地消费这些消息并应用随之而来的 mutation**；
 - **跨组的索引一致性更松**。
 
-这里有一句容易被误读的澄清，论文特意点出：
+这里有一句容易被误读的澄清：
 
 > **用的是逻辑上相距远的 entity group 之间的异步消息，不是物理上相距远的副本之间。** 数据中心之间的**所有网络流量都来自复制操作，而它们是同步且一致的**。
 
@@ -50,7 +50,7 @@ MegaStore（CIDR 2011）是 Google 在 [Bigtable](02-Bigtable.md) 之上补"跨�
 
 ### 边界怎么划：三个例子
 
-边界划分本身是个取舍，论文把两头都讲清楚了：
+边界划分本身是个取舍，两头都要讲清楚：
 
 > **边界太细** → 迫使过多的跨组操作；**把太多无关数据塞进一个组** → **串行化无关的写，降低吞吐**。
 
@@ -60,7 +60,7 @@ MegaStore（CIDR 2011）是 Google 在 [Bigtable](02-Bigtable.md) 之上补"跨�
 - **Blogs** —— 需要**多类 entity group**：每个用户的 **profile 天然一组**；博客是**协作式、没有单一永久所有者**的，所以另建一组放每篇博客的帖子与元数据；再建第三类为**每篇博客认领的唯一名字**建组。**当一个用户操作同时影响博客与 profile 时，应用依赖异步消息**；而对「创建新博客并认领唯一名字」这种**低流量**操作，**两阶段提交更方便且性能可接受**。
 - **Maps** —— 地理数据**没有天然的一致或便利粒度的划分**，所以把地球切成**互不重叠的 patch** 作为 entity group，跨 patch 的 mutation 用 2PC 保证原子性。判据是：**patch 要大到让两阶段事务不常见，又要小到每个 patch 只需很小的写吞吐**。与前两例不同的是，**entity group 的数量不随使用量增长，所以必须一开始就创建足够多的 patch** 来支撑后续规模。
 
-论文的收尾判断是：**几乎所有基于 MegaStore 构建的应用都找到了划 entity group 边界的自然方式。**
+收尾判断是：**几乎所有基于 MegaStore 构建的应用都找到了划 entity group 边界的自然方式。**
 
 ## 物理布局：把"行"当资源用
 
@@ -77,7 +77,7 @@ MegaStore（CIDR 2011）是 Google 在 [Bigtable](02-Bigtable.md) 之上补"跨�
 
 - **每个 entity 映射到单个 Bigtable 行** —— 主键值拼接成 Bigtable 的 row key，其余属性各占一个 Bigtable 列；
 - schema 里的 `IN TABLE User` 指示把它与父表 **colocate 到同一个 Bigtable**，而**键序保证 Photo entity 存在对应的 User 旁边**；
-- **这个机制可以递归应用，加速任意连接深度的查询** —— 论文的原话是：**用户可以通过操纵键序来强制层级布局**。
+- **这个机制可以递归应用，加速任意连接深度的查询** —— 原话是：**用户可以通过操纵键序来强制层级布局**。
 
 还有一个防热点的开关：schema 可以声明键升序、降序，**或者完全阻止排序** —— `SCATTER` 属性指示 MegaStore **给每个键前置一个两字节哈希**。**这样编码单调递增的键可以防止跨 Bigtable 服务器的大数据集出现热点。**
 
@@ -92,7 +92,7 @@ MegaStore（CIDR 2011）是 Google 在 [Bigtable](02-Bigtable.md) 之上补"跨�
 
 - **`STORING` 子句**：正常通过索引访问是两步（先读索引拿主键、再用主键取 entity），`STORING` 允许**把部分 entity 数据反规范化进索引项** —— 例子里 `PhotosByTag` 直接存了缩略图 URL，省掉第二次查找；
 - **Repeated index**：索引重复属性与 protobuf 子字段，**可以替代 child table**；每个唯一的 tag 生成一个索引项；
-- **Inline index**：把源 entity 的数据反规范化进相关的目标 entity，索引项**作为目标 entity 上的虚拟重复列**出现 —— 论文指出**实现多对多关系时它比维护一张链接表更省**。
+- **Inline index**：把源 entity 的数据反规范化进相关的目标 entity，索引项**作为目标 entity 上的虚拟重复列**出现 —— **实现多对多关系时它比维护一张链接表更省**。
 
 ## 到 Bigtable 的映射：一个关键技巧
 
@@ -122,11 +122,11 @@ Bigtable 只给单行事务（见那篇的"不支持跨行事务"），而 MegaS
 
 所以它的数据模型与 schema 语言提供**细粒度物理局部性控制**，靠**层级布局与声明式反规范化**消除大部分 join 需求。
 
-**那么 join 怎么办？在应用代码里做。** 论文给了一个具体的落地方案 —— 实现 **merge join 算法的 merge 阶段**：
+**那么 join 怎么办？在应用代码里做。** 一个具体的落地方案 —— 实现 **merge join 算法的 merge 阶段**：
 
 > 用户提供**多个返回同一张表主键、且顺序相同的查询**，系统返回**所有查询结果的键的交集**。
 
-还有应用用**并行查询实现外连接**：通常先做**一次索引查找**，再用第一次查找的结果做**并行索引查找**。论文的适用边界也说清了：**当二次索引查找并行进行、且第一次查找的结果数量不太大时，这能有效替代 SQL 风格的 join。**
+还有应用用**并行查询实现外连接**：通常先做**一次索引查找**，再用第一次查找的结果做**并行索引查找**。适用边界也说清了：**当二次索引查找并行进行、且第一次查找的结果数量不太大时，这能有效替代 SQL 风格的 join。**
 
 ## 判据速查
 
@@ -161,4 +161,4 @@ Bigtable 只给单行事务（见那篇的"不支持跨行事务"），而 MegaS
 
 ## 参考
 
-- Jason Baker, Chris Bond, James C. Corbett, JJ Furman, Andrey Khorlin, James Larson, Jean-Michel Leon, Yawei Li, Alexander Lloyd, Vadim Yushprakh. *Megastore: Providing Scalable, Highly Available Storage for Interactive Services*. CIDR 2011.（五条冲突需求、entity group 的定义与三个划法例子、物理布局与副本放置、Pre-joining with keys、local/global 索引与 STORING/Repeated/Inline、到 Bigtable 的映射与"元数据放一行"、成本透明的 API 哲学与 join 的替代方案）
+- J. Baker, C. Bond, J. C. Corbett, J. J. Furman, A. Khorlin, J. Larson, J.-M. Leon, Y. Li, A. Lloyd, V. Yushprakh. *Megastore: Providing Scalable, Highly Available Storage for Interactive Services*. CIDR 2011.

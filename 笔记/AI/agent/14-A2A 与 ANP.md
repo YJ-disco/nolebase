@@ -329,8 +329,8 @@ ANP 的定位是「**用 DID 构建去中心化的信任根基，借标准化的
 
 ## 参考
 
-- **A2A 官方规范 v0.3.0**（报文示例、方法名、状态机、extended card）：https://a2a-protocol.org/v0.3.0/specification/
-- A2A 三层结构、五个数据对象、方法清单、状态机九态、`.well-known/agent-card.json` 路径（并指出旧路径 `agent.json` 已不是标准）、securitySchemes 用 OpenAPI 形状、skill 是摘要级因此避开上下文窗口问题：https://eliteai.tools/agent-skills/a2a-protocol-1
-- 三种传输绑定、三种发现方式、Message/Artifact 的分工与 artifact 名字跨版本稳定、流式事件顺序、两个可恢复暂停状态的定位：http://agen.co/learning-center/mcp-vs-a2a
-- SDK 已包含的组件与 356 行示例规模、五种 RPC 方法的分层：https://tuhidulhossain.com/blog/the-agent2agent-a2a-protocol-a-complete-guide-to-ai-agent-interoperability-20260419/
-- ANP 的三个挑战与三步流程：来源《Hello-Agents》第十章 §10.4（原书自述 ANP 为概念性框架、无成熟生态）
+- https://a2a-protocol.org/v0.3.0/specification/
+- https://eliteai.tools/agent-skills/a2a-protocol-1
+- http://agen.co/learning-center/mcp-vs-a2a
+- https://tuhidulhossain.com/blog/the-agent2agent-a2a-protocol-a-complete-guide-to-ai-agent-interoperability-20260419/
+- 《Hello-Agents》第十章 §10.4

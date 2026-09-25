@@ -22,7 +22,7 @@ PagedAttention 之前的推理框架给每个请求分配**一整块连续显存
 | **内部碎片** | 请求最大可能生成 2048 Token 就先占好 2048 格，实际生成了 100 个就遇 EOS，剩下 1948 格被锁着却没用上 |
 | **外部碎片** | 不同请求预留的大块之间留下大小不一的空隙，加起来可能不少，但每块都不够放下一个完整请求 |
 
-论文的实测口径很扎眼：
+实测数字很扎眼：
 
 | 系统 | KV Cache 利用率 | 浪费 |
 | --- | --- | --- |
@@ -221,9 +221,9 @@ PagedAttention 不是免费的抽象：
 
 ## 参考
 
-- **PagedAttention 原论文**（碎片与利用率数据、2–4× 吞吐、Orca-Oracle 对比、共享节省、抢占恢复的 20% 判据、块 ≤64 时重算更快、Kernel 开销 20–26%）：Kwon et al., *Efficient Memory Management for Large Language Model Serving with PagedAttention*, SOSP 2023，https://arxiv.org/abs/2309.06180
-- **vLLM 官方博客**（PagedAttention 的动机与 vs HuggingFace 的对比）：https://blog.vllm.ai/2023/06/20/vllm.html
-- **vLLM Design — PagedAttention Kernel**（physical_block_number / physical_block_offset 的寻址示意；官方已标注为历史文档）：https://docs.vllm.ai/en/latest/design/paged_attention.html
-- **vLLM Engine Arguments**（`gpu_memory_utilization`、`block_size`、`enable_prefix_caching`、`max_num_seqs` 的默认值口径）：https://docs.vllm.ai/en/latest/configuration/engine_args.html
-- **vLLM V1 源码**（`vllm/v1/core`：KVCacheManager、BlockPool、FreeKVCacheBlockQueue）：https://github.com/vllm-project/vllm/tree/main/vllm/v1/core
-- **AIInfraGuide 2.1 PagedAttention**（Block Table 示例、Kernel 视角、工程参数、V1 源码骨架）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E5%9B%9B-%E6%8E%A8%E7%90%86%E4%BC%98%E5%8C%96/%E7%AC%AC2%E7%AB%A0-%E6%8E%A8%E7%90%86%E5%BC%95%E6%93%8E%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF/21-pagedattention
+- Kwon et al., *Efficient Memory Management for Large Language Model Serving with PagedAttention*, SOSP 2023，https://arxiv.org/abs/2309.06180
+- https://blog.vllm.ai/2023/06/20/vllm.html
+- https://docs.vllm.ai/en/latest/design/paged_attention.html
+- https://docs.vllm.ai/en/latest/configuration/engine_args.html
+- https://github.com/vllm-project/vllm/tree/main/vllm/v1/core
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E5%9B%9B-%E6%8E%A8%E7%90%86%E4%BC%98%E5%8C%96/%E7%AC%AC2%E7%AB%A0-%E6%8E%A8%E7%90%86%E5%BC%95%E6%93%8E%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF/21-pagedattention

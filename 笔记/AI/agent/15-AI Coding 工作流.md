@@ -179,9 +179,9 @@ Vibe Coding 的宣传逻辑是「AI 会填平甚至反转初级与资深的差�
 
 ## 参考
 
-- **METR 的 RCT（16 人 / 246 任务 / 慢 19% / 事前预测快 24%）**：论文 `arXiv:2507.09089`，写见 https://metr.org
-- **Copilot 现场实验的初级 35–39% / 资深 8–16%、资深在熟悉代码库可能变慢、工具真正有用的任务分类**：https://aitoolradar.io/blog/vibe-coding-is-a-lie
-- **Vibe Coding 的推文原文与 2025-02-02 出处、Collins 年度词汇、YC 25% 批次、Uplevel / Faros / Stack Overflow 数据、Veracode 45% 与 86%、CodeRabbit 1.7× 与 2.74×、GitClear 重构 25%→10%、两个事故案例、判断规则**：https://www.lampdatabase.com/posts/vibe_coding_dangers.php
-- **SDD 的定义、GitHub Spec Kit 93000+ stars、AWS Kiro、5–10× 循环减少、Reddit 失效模式清单、根因「几百个未言明的决定」**：https://www.buildercog.com/blog/spec-driven-development-vs-vibe-coding-2026
-- **Karpathy 原意为周末项目、分界线是「读不读代码」、Copilot bug +41%**：https://chercode.com/en/blog/vibe-coding-explained
-- **Karpathy 自己在 MenuGen 复盘中承认周边基建是乱麻**：https://wcollins.io/posts/2026/from-vibes-to-specs
+- 论文 `arXiv:2507.09089`，写见 https://metr.org
+- https://aitoolradar.io/blog/vibe-coding-is-a-lie
+- https://www.lampdatabase.com/posts/vibe_coding_dangers.php
+- https://www.buildercog.com/blog/spec-driven-development-vs-vibe-coding-2026
+- https://chercode.com/en/blog/vibe-coding-explained
+- https://wcollins.io/posts/2026/from-vibes-to-specs

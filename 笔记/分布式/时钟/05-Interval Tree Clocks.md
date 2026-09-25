@@ -11,7 +11,7 @@ tags:
 
 ## 动态系统里向量时钟坏在哪
 
-论文把先前方案的失效点列得很具体：
+先前方案的失效点列得很具体：
 
 | 方案的问题 | 具体表现 |
 | --- | --- |
@@ -20,11 +20,11 @@ tags:
 | 元数据无法释放 | 回收不了 id，随 id 增长的元数据也释放不了；当不可达概率高时，"不回收"反而更划算 |
 | 局部退休只支持受限形态 | 有方案只允许"由直接祖先 join 掉"这一种终止模式 |
 
-论文也点了 **Dynamo** 的做法作为对照：Dynamo 为控制版本向量增长，会把不活跃的旧条目激进剪枝。作者的做法是"参数调过、生产环境出错概率很低"，但一般意义上这会导致旧更新**复活**（resurgence of old updates）。ITC 想避免的正是"必须靠剪枝才能控制向量长度"这个处境。
+一个对照是 **Dynamo** 的做法：Dynamo 为控制版本向量增长，会把不活跃的旧条目激进剪枝。作者的做法是"参数调过、生产环境出错概率很低"，但一般意义上这会导致旧更新**复活**（resurgence of old updates）。ITC 想避免的正是"必须靠剪枝才能控制向量长度"这个处境。
 
 ## fork-event-join 模型
 
-论文先把所有因果跟踪机制抽成三个核心操作，作用在 stamp 上。stamp 是一个二元组 $(i, e)$：$i$ 是 id，$e$ 是**事件分量**（编码"因果上已知的事件"）。事件分量之间的偏序记作 $(E, \sqsubseteq)$ —— 版本向量里它是逐分量比较 $e \sqsubseteq e' \iff \forall k: e[k] \le e'[k]$；因果历史（causal histories）里它是集合包含。
+所有因果跟踪机制可以抽成三个核心操作，作用在 stamp 上。stamp 是一个二元组 $(i, e)$：$i$ 是 id，$e$ 是**事件分量**（编码"因果上已知的事件"）。事件分量之间的偏序记作 $(E, \sqsubseteq)$ —— 版本向量里它是逐分量比较 $e \sqsubseteq e' \iff \forall k: e[k] \le e'[k]$；因果历史（causal histories）里它是集合包含。
 
 **fork**：克隆一个 stamp 的因果过去，产出两个事件分量相同、id 不同的 stamp。
 
@@ -52,7 +52,7 @@ $$e_3 = e_1 \sqcup e_2, \quad 且\ e_1 \sqsubseteq e_3,\ e_2 \sqsubseteq e_3$$
 
 ### 框架再看一层：id 固定在哪里
 
-论文第 4 节把这件事抽象成一个**函数空间**框架：因果跟踪机制可以用"定义在某个域上的函数"来刻画，机制之间的差别落在两处 ——
+这件事可以抽象成一个**函数空间**框架：因果跟踪机制可以用"定义在某个域上的函数"来刻画，机制之间的差别落在两处 ——
 
 | | 经典机制 | ITC |
 | --- | --- | --- |
@@ -214,7 +214,7 @@ $$\mathrm{event}(i, e) = \begin{cases} (i,\ \mathrm{fill}(i, e)) & \mathrm{fill}
 
 ## 一次完整运行：stamp 怎么长大又怎么缩回
 
-论文用它最大的那个例子说明 ITC 自适应的过程：
+用最大的那个例子说明 ITC 自适应的过程：
 
 1. 单个参与者，持有 seed stamp；
 2. fork 成两个；其中一个发生一次 event 后再 fork，另一个发生两次 event —— 此时三个参与者；
@@ -222,11 +222,11 @@ $$\mathrm{event}(i, e) = \begin{cases} (i,\ \mathrm{fill}(i, e)) & \mathrm{fill}
 4. 一个参与者发生 event，另外两个先 join 再 fork 完成同步；
 5. **最后的 join 让 id 合并两个子树、发生化简**；紧接着的那次 event 恰好把事件树缺的那块填满，于是**事件函数退化成一个单独的整数**。
 
-论文对这个例子的注解是两条：**每次 event 都只在自己 id 覆盖的区间上抬升事件树**；以及 **join 之后能发生化简**（`sum` 里的 `norm` 就是干这个的）。这就是"stamp 会随参与者数量收缩"的具体来源。
+这个例子的注解是两条：**每次 event 都只在自己 id 覆盖的区间上抬升事件树**；以及 **join 之后能发生化简**（`sum` 里的 `norm` 就是干这个的）。这就是"stamp 会随参与者数量收缩"的具体来源。
 
 ## 空间性质
 
-论文第 6 节用仿真评估空间需求，结论在摘要里给了定性表述：**空间需求随实体数量良性地扩展，并且随时间只温和增长**。与向量时钟的关键差别是"会缩"——向量时钟的长度单调不减，只能靠剪枝控制。
+仿真评估空间需求的结论是：**空间需求随实体数量良性地扩展，并且随时间只温和增长**。与向量时钟的关键差别是"会缩"——向量时钟的长度单调不减，只能靠剪枝控制。
 
 ## 判据与边界
 
@@ -249,4 +249,4 @@ $$\mathrm{event}(i, e) = \begin{cases} (i,\ \mathrm{fill}(i, e)) & \mathrm{fill}
 
 ## 参考
 
-- Paulo Sérgio Almeida, Carlos Baquero, Victor Fonte. *Interval Tree Clocks: A Logical Clock for Dynamic Systems*. DI/CCTC, Universidade do Minho, Braga, Portugal。（原材料 PDF 首页不含发表信息，**具体会议与年份待核**）
+- Paulo Sérgio Almeida, Carlos Baquero, Victor Fonte. *Interval Tree Clocks: A Logical Clock for Dynamic Systems*. DI/CCTC, Universidade do Minho, Braga, Portugal。

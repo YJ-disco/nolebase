@@ -183,8 +183,8 @@ Q: [问题] A: Let's think step by step.
 
 ## 参考
 
-- 来源：《Hello-Agents》第三章 §3.2.1
-- **CoT 原论文（草稿纸机制、规模依赖、Last Letter 0%→63%、各数据集对照表）**：Wei, J., et al. arXiv:2201.11903, NeurIPS 2022；整理见 https://ai.towerofrecords.com/ai/chain-of-thought 与 https://www.gradually.ai/en/ai-glossary/chain-of-thought-prompting/
-- **Zero-Shot CoT 的 MultiArith 17.7%→78.7%**：Kojima et al. arXiv:2201.11903 同期；https://inblog.io/glossary/chain-of-thought
-- **Self-Consistency 的 k=1/10/40 与算力成本、规模依赖表（350M 为负）**：Wang et al. ICLR 2023；https://ai.towerofrecords.com/ai/chain-of-thought
-- **token-compute 分配与外部工作记忆的机制解释、对可解释性的作用**：https://www.eulerfold.com/research-decoded/chain-of-thought-prompting
+- 《Hello-Agents》第三章 §3.2.1
+- Wei, J., et al. arXiv:2201.11903, NeurIPS 2022；整理见 https://ai.towerofrecords.com/ai/chain-of-thought 与 https://www.gradually.ai/en/ai-glossary/chain-of-thought-prompting/
+- Kojima et al. arXiv:2201.11903 同期；https://inblog.io/glossary/chain-of-thought
+- Wang et al. ICLR 2023；https://ai.towerofrecords.com/ai/chain-of-thought
+- https://www.eulerfold.com/research-decoded/chain-of-thought-prompting

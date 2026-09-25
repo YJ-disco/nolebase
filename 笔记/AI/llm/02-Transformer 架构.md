@@ -97,7 +97,7 @@ class MultiHeadAttention(nn.Module):
 
 ## 为什么是它胜出：三个维度上的对照
 
-「并行」只是表面说法。原论文用三个量把自注意力和循环/卷积放在一起比，才是它胜出的完整理由。设 $n$ 为序列长度、$d$ 为表示维度、$k$ 为卷积核宽度：
+「并行」只是表面说法。三个量把自注意力和循环/卷积放在一起比，才是它胜出的完整理由。设 $n$ 为序列长度、$d$ 为表示维度、$k$ 为卷积核宽度：
 
 | 层类型 | **每层计算复杂度** | **顺序操作数** | **最大路径长度** |
 | --- | --- | --- | --- |
@@ -186,5 +186,5 @@ class PositionalEncoding(nn.Module):
 
 ## 参考
 
-- 来源：《Hello-Agents》第三章 §3.1.2
+- 《Hello-Agents》第三章 §3.1.2
 - Vaswani, A., et al. Attention is all you need. NeurIPS, 2017.

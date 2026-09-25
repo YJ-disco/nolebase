@@ -299,9 +299,9 @@ return client.chat.completions.create(
 
 ## 参考
 
-- 来源：《Hello-Agents》第四章 §4.1、第七章 §7.4.5、§7.5
-- **OpenAI 官方 Function Calling 指南**（tools / tool_choice / tool_calls / 并行调用 / Responses API）：https://developers.openai.com/api/docs/guides/function-calling
-- 响应字段逐项解释（`finish_reason`、`arguments` 是字符串、`content` 为 null）：https://theneuralbase.com/openai/learn/intermediate/model-response-with-tool-calls/
-- 两轮往返的三条不变量、schema token 成本、安全风险清单：https://ossaihub.com/code/openai-function-calling
-- OpenAI 与 Anthropic 的字段对照：http://flo2.com/blog/llm-function-calling
-- `strict` / `additionalProperties: false` 的作用：https://www.hivebook.wiki/wiki/openai-api-function-calling
+- 《Hello-Agents》第四章 §4.1、第七章 §7.4.5、§7.5
+- https://developers.openai.com/api/docs/guides/function-calling
+- https://theneuralbase.com/openai/learn/intermediate/model-response-with-tool-calls/
+- https://ossaihub.com/code/openai-function-calling
+- http://flo2.com/blog/llm-function-calling
+- https://www.hivebook.wiki/wiki/openai-api-function-calling

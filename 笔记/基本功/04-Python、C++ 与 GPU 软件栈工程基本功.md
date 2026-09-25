@@ -202,8 +202,8 @@ PY
 
 ## 参考
 
-- **AIInfraGuide 第1章 编程语言基础**（三层语言分工、Python 引用模型与并发选型、RAII 与 ABI、pybind11 与零拷贝的契约、GPU 软件栈四层与诊断顺序）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%80-%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86/%E7%AC%AC1%E7%AB%A0-%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80
-- **pybind11 Documentation**：https://pybind11.readthedocs.io/
-- **NVIDIA CUDA Installation Guide**（驱动、Toolkit、Runtime 的关系）：https://docs.nvidia.com/cuda/cuda-installation-guide-linux/
-- **NVIDIA Container Toolkit**：https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/
-- **CPython — Global Interpreter Lock**：https://docs.python.org/3/glossary.html#term-global-interpreter-lock
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%80-%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86/%E7%AC%AC1%E7%AB%A0-%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80
+- https://pybind11.readthedocs.io/
+- https://docs.nvidia.com/cuda/cuda-installation-guide-linux/
+- https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/
+- https://docs.python.org/3/glossary.html#term-global-interpreter-lock

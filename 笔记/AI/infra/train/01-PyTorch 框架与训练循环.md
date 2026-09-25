@@ -272,9 +272,9 @@ for i, batch in enumerate(dataloader):
 
 ## 参考
 
-- **PyTorch 官方文档**：https://pytorch.org/docs/stable/
-- **PyTorch autograd 机制详解**：https://pytorch.org/docs/stable/notes/autograd.html
-- **torch.profiler 文档**：https://pytorch.org/docs/stable/profiler.html
-- **Automatic Mixed Precision (AMP)**：https://pytorch.org/docs/stable/amp.html
-- **PyTorch Performance Tuning Guide**：https://pytorch.org/tutorials/recipes/recipes/tuning_guide.html
-- **AIInfraGuide PyTorch 框架快速入门**（来源教程；本笔记按其结构重写，`set_to_none` 与测显存的两个坑为补充）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%80-%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86/pyroch/pytorch%E6%A1%86%E6%9E%B6%E5%85%A5%E9%97%A8
+- https://pytorch.org/docs/stable/
+- https://pytorch.org/docs/stable/notes/autograd.html
+- https://pytorch.org/docs/stable/profiler.html
+- https://pytorch.org/docs/stable/amp.html
+- https://pytorch.org/tutorials/recipes/recipes/tuning_guide.html
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%80-%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86/pyroch/pytorch%E6%A1%86%E6%9E%B6%E5%85%A5%E9%97%A8

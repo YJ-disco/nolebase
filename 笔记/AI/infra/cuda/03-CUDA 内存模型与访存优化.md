@@ -195,7 +195,7 @@ float4 v = reinterpret_cast<const float4*>(in)[i / 4];
 
 ## 参考
 
-- **AIInfraGuide 1.3 CUDA 内存模型 / 2.2 内存访问优化**（内存层次对照、合并访问与事务粒度、SoA vs AoS、Bank 结构与冲突代价、矩阵转置的 32-way 冲突与 Padding 推导、Swizzle、Nsight 冲突计数器、向量化加载）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%BA%8C-cuda%E7%BC%96%E7%A8%8B%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96/13-cuda%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B
-- **CUDA C++ Programming Guide — Memory Hierarchy**：https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#memory-hierarchy
-- **CUDA C++ Best Practices Guide — Coalesced Access to Global Memory**：https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#coalesced-access-to-global-memory
-- **CUDA C++ Best Practices Guide — Shared Memory and Bank Conflicts**：https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#shared-memory
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%BA%8C-cuda%E7%BC%96%E7%A8%8B%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96/13-cuda%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B
+- https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#memory-hierarchy
+- https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#coalesced-access-to-global-memory
+- https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#shared-memory

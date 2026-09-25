@@ -7,7 +7,7 @@ tags:
 
 Bigtable（OSDI 2006）是 Google 的**结构化数据存储**，建在 [[01-GFS|GFS]] 之上。它被定位成"能可靠扩展到 PB 级数据与数千台机器"的系统，上线时已被 **60 多个 Google 产品**使用（Analytics、Finance、Orkut、Personalized Search、Writely、Google Earth），集群规模从几台到数千台服务器、存到几百 TB。
 
-它在设计上有一个很明确的态度：**不追求完整的关系模型**。论文的说法是——Bigtable 提供的是一个**简单的数据模型**，它支持**对数据布局与格式的动态控制**，并让客户端能**推理数据的局部性**。
+它在设计上有一个很明确的态度：**不追求完整的关系模型**。Bigtable 提供的是一个**简单的数据模型**，它支持**对数据布局与格式的动态控制**，并让客户端能**推理数据的局部性**。
 
 ## 数据模型：一个三维有序 map
 
@@ -17,7 +17,7 @@ Bigtable 的定义只有一句：
 
 $$(\text{row:string},\ \text{column:string},\ \text{time:int64}) \to \text{string}$$
 
-论文给的例子最能说明意图：存网页的表，**row name 是反转的 URL**（`com.google.www` 这种，好让同一域名下的页面聚在一起），`contents` column family 存页面内容，`anchor` column family 存引用该页面的锚文本。同一行的不同 column 由冒号分隔的 `family:qualifier` 指定。
+最能说明意图的例子：存网页的表，**row name 是反转的 URL**（`com.google.www` 这种，好让同一域名下的页面聚在一起），`contents` column family 存页面内容，`anchor` column family 存引用该页面的锚文本。同一行的不同 column 由冒号分隔的 `family:qualifier` 指定。
 
 三个设计后果值得单独指出：
 
@@ -52,7 +52,7 @@ Chubby 是**高可用、持久的分布式锁服务**（5 个活跃副本，一�
 4. 存 **schema 信息**（每张表的 column family 信息）；
 5. 存**访问控制列表**。
 
-**代价被量化了**：Chubby 长时间不可用会让 Bigtable 不可用。论文在跨 11 个 Chubby 实例的 14 个 Bigtable 集群上测量，**因 Chubby 不可用导致数据不可用的平均时间占比是 0.0047%**；受影响最大的单集群是 **0.0326%**。
+**代价被量化了**：Chubby 长时间不可用会让 Bigtable 不可用。跨 11 个 Chubby 实例、14 个 Bigtable 集群的测量显示，**因 Chubby 不可用导致数据不可用的平均时间占比是 0.0047%**；受影响最大的单集群是 **0.0326%**。
 
 ## 组件与职责划分
 
@@ -64,7 +64,7 @@ Chubby 是**高可用、持久的分布式锁服务**（5 个活跃副本，一�
 | **tablet server** | 管理一组 tablet（**典型 10 到 1000 个**）、处理读写、**切分过大的 tablet** |
 | **client 库** | 直接与 tablet server 通信 |
 
-一条与 GFS 同构的分工：**client 数据不经过 master**，client 直接与 tablet server 读写。**因为 client 不依赖 master 获取 tablet 位置信息，多数 client 从不与 master 通信** —— 论文的对应用词是"master 在实践中负载很轻"。
+一条与 GFS 同构的分工：**client 数据不经过 master**，client 直接与 tablet server 读写。**因为 client 不依赖 master 获取 tablet 位置信息，多数 client 从不与 master 通信** —— 对应的说法是"master 在实践中负载很轻"。
 
 ## 一个 tablet 内部：commit log + memtable + SSTables
 
@@ -92,17 +92,17 @@ memtable 会一直增长，所以有一整套后台整理机制：
 | **merging compaction** | 后台定期把若干 SSTable 与 memtable 合成一个新 SSTable，输入完成后即可丢弃 | **限制 SSTable 的数量** —— 否则读操作可能要在任意多个 SSTable 上合并更新 |
 | **major compaction** | 把所有 SSTable 重写成**恰好一个** | 回收已删数据占用的资源，并保证**已删数据及时消失** |
 
-**后两档的关键区别在于删除**：非 major compaction 产出的 SSTable 里可能含**特殊删除条目**，用来抑制仍存活的旧 SSTable 里的已删数据；而 **major compaction 产出的 SSTable 不含任何删除信息或已删数据**。Bigtable **轮转所有 tablet 并定期对它们做 major compaction** —— 论文特意指出这条对**存敏感数据的服务**很重要。
+**后两档的关键区别在于删除**：非 major compaction 产出的 SSTable 里可能含**特殊删除条目**，用来抑制仍存活的旧 SSTable 里的已删数据；而 **major compaction 产出的 SSTable 不含任何删除信息或已删数据**。Bigtable **轮转所有 tablet 并定期对它们做 major compaction** —— 这条对**存敏感数据的服务**很重要。
 
 ## 五处性能改进
 
-论文的"refinements"一节是整篇最实用的部分。
+"refinements"那一节是整篇最实用的部分。
 
 ### 局部性组（locality group）
 
-客户端可以把多个 column family **分组成一个 locality group**，**每个 tablet 为每个 locality group 生成一个独立的 SSTable**。把通常**不一起访问**的 family 隔开，读就更省 —— 论文的例子：Webtable 里页面**元数据**（语言、校验和）一组，**页面内容**另一组，只想读元数据的应用**不必读穿全部页面内容**。
+客户端可以把多个 column family **分组成一个 locality group**，**每个 tablet 为每个 locality group 生成一个独立的 SSTable**。把通常**不一起访问**的 family 隔开，读就更省 —— 例子：Webtable 里页面**元数据**（语言、校验和）一组，**页面内容**另一组，只想读元数据的应用**不必读穿全部页面内容**。
 
-locality group 还能声明为 **in-memory**：它的 SSTable 被**惰性加载**进 tablet server 内存，加载后读该组的列**完全不碰盘**。论文说这个特性用于"小而频繁访问的数据"，**内部拿它放 METADATA 表的 location column family**。
+locality group 还能声明为 **in-memory**：它的 SSTable 被**惰性加载**进 tablet server 内存，加载后读该组的列**完全不碰盘**。这个特性用于"小而频繁访问的数据"，**Bigtable 自己拿它放 METADATA 表的 location column family**。
 
 ### 压缩：两遍方案与实测压缩率
 
@@ -113,11 +113,11 @@ locality group 还能声明为 **in-memory**：它的 SSTable 被**惰性加载*
 1. 第一遍用 **Bentley-McIlroy** 方案，在**大窗口内压缩长的公共字符串**；
 2. 第二遍用快速算法，在 **16 KB 小窗口**里找重复。
 
-**速度数字**（论文给的）：两遍都很快，**编码 100–200 MB/s，解码 400–1000 MB/s**。
+**速度数字**：两遍都很快，**编码 100–200 MB/s，解码 400–1000 MB/s**。
 
-论文承认选算法时**重速度而轻压缩率**，但结果超出预期：Webtable 里存网页内容的实验达到 **10:1 的空间压缩**，**远好于 HTML 页面上 Gzip 典型的 3:1 到 4:1**。原因在于**行的布局**——同一主机的所有页面存在相邻位置，Bentley-McIlroy 因此能识别出同主机页面之间大量的共享样板。
+选算法时**重速度而轻压缩率**，但结果超出预期：Webtable 里存网页内容的实验达到 **10:1 的空间压缩**，**远好于 HTML 页面上 Gzip 典型的 3:1 到 4:1**。原因在于**行的布局**——同一主机的所有页面存在相邻位置，Bentley-McIlroy 因此能识别出同主机页面之间大量的共享样板。
 
-论文由此给出一条可迁移的经验：**很多应用都把 row name 设计成让相似数据聚在一起，因此能拿到很好的压缩率**；而存同一值的多个版本时压缩率还会更好。
+一条可迁移的经验：**很多应用都把 row name 设计成让相似数据聚在一起，因此能拿到很好的压缩率**；而存同一值的多个版本时压缩率还会更好。
 
 ### 两级缓存
 
@@ -180,4 +180,4 @@ $$\langle \text{table},\ \text{row name},\ \text{log sequence number} \rangle$$
 
 ## 参考
 
-- Fay Chang, Jeffrey Dean, Sanjay Ghemawat, Wilson C. Hsieh, Deborah A. Wallach, Mike Burrows, Tushar Chandra, Andrew Fikes, Robert E. Gruber. *Bigtable: A Distributed Storage System for Structured Data*. OSDI 2006.（数据模型、SSTable、Chubby 的五处依赖与可用性实测、三档 compaction、locality group / 压缩 / 两级缓存 / Bloom filter / commit log 排序恢复）
+- F. Chang, J. Dean, S. Ghemawat, W. C. Hsieh, D. A. Wallach, M. Burrows, T. Chandra, A. Fikes, R. E. Gruber. *Bigtable: A Distributed Storage System for Structured Data*. OSDI 2006.

@@ -267,8 +267,8 @@ top-k 不是一个可以拍脑袋定的常数，它受四个因素牵制：
 
 ## 参考
 
-- HNSW 参数与三档实测配置、IVF-PQ 对比表、PQ 压缩比、ScaNN 与 DiskANN 的定位：https://www.nexprotools.com/blog/vector-database-indexing-hnsw-ivf-pq-ann-search-guide
-- HNSW 内存估算（3.4KB/向量、1 亿=340GB）、墓碑删除导致 recall 98%→85%、IVF 的 nlist/nprobe 经验公式与「FAISS 默认 nprobe=1 几乎总是错的」、DiskANN 的 SIFT1B 数据、ADC 与残差编码、OPQ 提升 2–5%：https://hld.handbook.academy/curriculum/ai-ml-system-design/vector-search-at-scale
-- 三类索引的选型表、recall@K 的测法、`efSearch >= k` 的下界：https://callsphere.ai/blog/vector-index-types-flat-ivf-hnsw-product-quantization
-- HNSW 的分层直觉、ANN 的 recall–latency–memory 三角、PQ 必须配精排：https://www.machinelearningatscale.com/blog/hnsw-ann-vector-search-explained
-- 距离度量的三种定义、B+ 树/哈希为什么不行、recall@K 的误解、IVF/HNSW/PQ 的分工、一条查询的完整旅程与标量过滤的三种取舍：https://aiengineeringfromscratch.com/lesson.html?path=phases/11-llm-engineering/07-advanced-rag （中文同名整理见正文引用的「向量数据库原理拆解」一文）
+- https://www.nexprotools.com/blog/vector-database-indexing-hnsw-ivf-pq-ann-search-guide
+- https://hld.handbook.academy/curriculum/ai-ml-system-design/vector-search-at-scale
+- https://callsphere.ai/blog/vector-index-types-flat-ivf-hnsw-product-quantization
+- https://www.machinelearningatscale.com/blog/hnsw-ann-vector-search-explained
+- https://aiengineeringfromscratch.com/lesson.html?path=phases/11-llm-engineering/07-advanced-rag

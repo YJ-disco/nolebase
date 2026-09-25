@@ -53,8 +53,8 @@ tags:
 
 ## 参考
 
-- **AIInfraGuide 模块一（GPU 硬件概论 / GPU 基础知识 / NVIDIA GPU 架构演进 / 集群通信网络与 NCCL）**：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%80-%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86/gpu/gpu-basics
-- **NVIDIA H100 Tensor Core GPU Architecture Whitepaper**（SM / Tensor Core 数量、HBM3 带宽、NVLink 4.0 规格）：https://resources.nvidia.com/en-us-tensor-core/gtc22-whitepaper-hopper
-- **NVIDIA A100 Tensor Core GPU Architecture Whitepaper**：https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvidia-ampere-architecture-whitepaper.pdf
-- **NVIDIA Blackwell Architecture Technical Brief**：https://www.nvidia.com/en-us/data-center/technologies/blackwell-architecture/
-- **NVIDIA NVLink and NVSwitch**：https://www.nvidia.com/en-us/data-center/nvlink/
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%80-%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86/gpu/gpu-basics
+- https://resources.nvidia.com/en-us-tensor-core/gtc22-whitepaper-hopper
+- https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvidia-ampere-architecture-whitepaper.pdf
+- https://www.nvidia.com/en-us/data-center/technologies/blackwell-architecture/
+- https://www.nvidia.com/en-us/data-center/nvlink/

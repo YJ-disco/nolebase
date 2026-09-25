@@ -219,8 +219,8 @@ $$J_{\text{GRPO}}(\theta)=\mathbb{E}\left[\frac{\pi_\theta(a|s)}{\pi_{\text{ref}
 
 ## 参考
 
-- 来源：《Hello-Agents》第十一章
-- PPO：Schulman, J., et al. Proximal Policy Optimization Algorithms. arXiv:1707.06347, 2017.
-- GRPO：DeepSeekMath 提出的 Group Relative Policy Optimization
-- RLHF：Christiano, P., et al. Deep Reinforcement Learning from Human Preferences. NeurIPS 2017.
-- LoRA：Hu, E., et al. LoRA: Low-Rank Adaptation of Large Language Models. ICLR 2022.
+- 《Hello-Agents》第十一章
+- Schulman, J., et al. Proximal Policy Optimization Algorithms. arXiv:1707.06347, 2017.
+- DeepSeekMath 提出的 Group Relative Policy Optimization
+- Christiano, P., et al. Deep Reinforcement Learning from Human Preferences. NeurIPS 2017.
+- Hu, E., et al. LoRA: Low-Rank Adaptation of Large Language Models. ICLR 2022.

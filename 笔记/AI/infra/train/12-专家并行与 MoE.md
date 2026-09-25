@@ -117,8 +117,8 @@ MoE 是当前千亿/万亿参数模型（DeepSeek-V3、Mixtral 等）的主流�
 
 ## 参考
 
-- **AIInfraGuide 第10章 MoE 并行**（MoE 结构、Router Top-K 与容量因子、EP 与 TP 的区别、两次 All-to-All 的分工与通信量、负载均衡的 aux loss 与 aux-loss-free 两类解法、EP×DP/TP/PP 的组合）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%89-%E5%88%86%E5%B8%83%E5%BC%8F%E8%AE%AD%E7%BB%83/%E7%AC%AC10%E7%AB%A0-moe%E5%B9%B6%E8%A1%8C
-- **Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity**：https://arxiv.org/abs/2101.03961
-- **Mixtral of Experts**：https://arxiv.org/abs/2401.04088
-- **DeepSeek-V3 Technical Report**（aux-loss-free 负载均衡与 EP 配置）：https://arxiv.org/abs/2412.19437
-- **DeepEP**（MoE 专用高性能通信库）：https://github.com/deepseek-ai/DeepEP
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%89-%E5%88%86%E5%B8%83%E5%BC%8F%E8%AE%AD%E7%BB%83/%E7%AC%AC10%E7%AB%A0-moe%E5%B9%B6%E8%A1%8C
+- https://arxiv.org/abs/2101.03961
+- https://arxiv.org/abs/2401.04088
+- https://arxiv.org/abs/2412.19437
+- https://github.com/deepseek-ai/DeepEP

@@ -179,6 +179,6 @@ LLM_MODEL_ID="llama3"
 
 ## 参考
 
-- 来源：《Hello-Agents》第四章 §4.1.3、第七章 §7.2
-- VLLM 官方文档：https://docs.vllm.ai/en/latest/getting_started/installation.html
-- Ollama：https://ollama.com
+- 《Hello-Agents》第四章 §4.1.3、第七章 §7.2
+- https://docs.vllm.ai/en/latest/getting_started/installation.html
+- https://ollama.com

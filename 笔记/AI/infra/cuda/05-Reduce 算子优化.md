@@ -198,7 +198,7 @@ V7 达到 85%，**这一版才真正把「访存效率」和「GPU 利用率」�
 
 ## 参考
 
-- **AIInfraGuide 3.1 CUDA Reduce 算子优化**（算术强度分析、八个版本的逐版瓶颈与收益、Bank Conflict 的逐轮推导、步长反转如何一举修两个瓶颈、`volatile` 的必要性、两级归约、性能汇总表与工程选型）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%BA%8C-cuda%E7%BC%96%E7%A8%8B%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96/31-cuda-reduce%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96
-- **NVIDIA CUB — DeviceReduce**：https://github.com/NVIDIA/cccl/tree/main/cub
-- **CUDA C++ Best Practices Guide — Reduction（官方 7 步优化示例）**：https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html
-- **Mark Harris — Optimizing Parallel Reduction in CUDA**（该优化序列的经典出处）：https://developer.download.nvidia.com/assets/cuda/files/reduction.pdf
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%BA%8C-cuda%E7%BC%96%E7%A8%8B%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96/31-cuda-reduce%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96
+- https://github.com/NVIDIA/cccl/tree/main/cub
+- https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html
+- https://developer.download.nvidia.com/assets/cuda/files/reduction.pdf

@@ -256,7 +256,7 @@ prompt = [
 ]
 ```
 
-关键在于：**假设答案即使内容不完全正确也管用**。它携带的关键术语、概念和表述风格与真实文档同属「陈述性文本」，能有效把检索引向正确区域。论文明确说过：生成文档可能包含幻觉，但**稠密编码器会把它映射到与真实文档同一嵌入空间，从而被语料「锚住」**。
+关键在于：**假设答案即使内容不完全正确也管用**。它携带的关键术语、概念和表述风格与真实文档同属「陈述性文本」，能有效把检索引向正确区域。有一种解释是：生成文档可能包含幻觉，但**稠密编码器会把它映射到与真实文档同一嵌入空间，从而被语料「锚住」**。
 
 反过来说代价：HyDE **每次检索都要多调一次 LLM**，且那份假设文档本身可能是错的（但它不需要对，只需要「像」）。
 
@@ -362,12 +362,12 @@ if mid not in agg or s > float(agg[mid].get("score", 0.0)):
 
 ## 参考
 
-- 来源：《Hello-Agents》第八章 §8.3
-- **RRF 公式、k=60 的出处、手算例子、谁支持它、与重排的区别**：https://www.scaler.com/topics/reciprocal-rank-fusion/
-- **两阶段检索（bi-encoder vs cross-encoder）、100–1000× 延迟差、生产规则、重排模型阵容、context precision 0.61→0.71→0.79**：https://aiengineeringfromscratch.com/lesson.html?path=phases/11-llm-engineering/07-advanced-rag
-- **分块五策略对比、chunk size 实测区间、overlap 的收益与上限、代码按 AST 切、token 数的语言差异、late chunking**：https://www.theagentecosystem.com/blog/rag-chunking-strategies 、https://techsy.io/en/blog/rag-chunking-strategies
-- **分块在不同内容类型上的最优区间与调参流程**：https://www.tech-japan.jp/en/blog/chunking-research/
-- BM25 默认参数 `k1=1.2, b=0.75`、混合检索与 RRF 的具体配置：https://arxiv.org/html/2604.01733v1
-- 生产 RAG 的上下文组装、两种幻觉来源、评测指标与成本桶：https://www.apex-logic.net/news/production-rag-architecture-2026
-- RRF 的实现细节（defaultdict 累加、doc_map、加权变体）：https://deepwiki.com/weaviate/retrieve-dspy/10.4-reciprocal-rank-fusion-(rrf)
-- Anthropic contextual retrieval 的失败率 5.7% → 3.7%：https://techsy.io/en/blog/rag-chunking-strategies
+- 《Hello-Agents》第八章 §8.3
+- https://www.scaler.com/topics/reciprocal-rank-fusion/
+- https://aiengineeringfromscratch.com/lesson.html?path=phases/11-llm-engineering/07-advanced-rag
+- https://www.theagentecosystem.com/blog/rag-chunking-strategies 、https://techsy.io/en/blog/rag-chunking-strategies
+- https://www.tech-japan.jp/en/blog/chunking-research/
+- https://arxiv.org/html/2604.01733v1
+- https://www.apex-logic.net/news/production-rag-architecture-2026
+- https://deepwiki.com/weaviate/retrieve-dspy/10.4-reciprocal-rank-fusion-(rrf)
+- https://techsy.io/en/blog/rag-chunking-strategies

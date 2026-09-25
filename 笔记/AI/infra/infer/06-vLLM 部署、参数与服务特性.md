@@ -291,9 +291,9 @@ V1 已成为唯一引擎，升级到近期版本就是强制迁移。**升级前
 
 ## 参考
 
-- **vLLM Quickstart**（安装、离线推理、OpenAI 兼容服务、`llm.chat`）：https://docs.vllm.ai/en/stable/getting_started/quickstart.html
-- **vLLM Engine Arguments**（引擎参数默认值）：https://docs.vllm.ai/en/latest/configuration/engine_args.html
-- **vLLM V1 发布说明**（1.7× 的机制来源、零开销前缀缓存、多进程架构）：https://blog.vllm.ai/2025/01/27/v1-alpha-release.html
-- **vLLM 版本与 V0 移除时间线**：https://github.com/vllm-project/vllm/blob/main/docs/design/arch_overview.md
-- **vLLM/SGLang/TensorRT-LLM 2026 对比基准**（冷启动 62 s / 58 s / 28 min、H100 并发差距、V1 收益随模型规模缩放）：https://news.creeta.com/en/llm-inference-engine-benchmarks-2026-vllm-sglang-tensorrt
-- **AIInfraGuide 3.1 vLLM 快速入门 + 第8/9/10章大纲**（服务特性、可观测性指标、扩缩容与容量规划；后三章源站仅有大纲）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E5%9B%9B-%E6%8E%A8%E7%90%86%E4%BC%98%E5%8C%96/%E7%AC%AC3%E7%AB%A0-%E6%B7%B1%E5%85%A5vllm/vllm%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8
+- https://docs.vllm.ai/en/stable/getting_started/quickstart.html
+- https://docs.vllm.ai/en/latest/configuration/engine_args.html
+- https://blog.vllm.ai/2025/01/27/v1-alpha-release.html
+- https://github.com/vllm-project/vllm/blob/main/docs/design/arch_overview.md
+- https://news.creeta.com/en/llm-inference-engine-benchmarks-2026-vllm-sglang-tensorrt
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E5%9B%9B-%E6%8E%A8%E7%90%86%E4%BC%98%E5%8C%96/%E7%AC%AC3%E7%AB%A0-%E6%B7%B1%E5%85%A5vllm/vllm%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8

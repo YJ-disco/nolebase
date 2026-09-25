@@ -231,4 +231,4 @@ terminal.run({"command": "cd ../../../etc"})       # 不允许：访问工作目
 
 ## 参考
 
-- 来源：《Hello-Agents》第九章 §9.4–§9.5
+- 《Hello-Agents》第九章 §9.4–§9.5

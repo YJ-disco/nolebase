@@ -193,7 +193,7 @@ for each block of K, V:
 
 ## 参考
 
-- **AIInfraGuide 5.1 CUDA Softmax 朴素实现优化 / 5.2 CUDA Online Softmax 实现优化**（Safe Softmax 的三遍扫描、Online 递推的完整推导与修正因子、数值稳定性等价论证、两篇各自的优化阶梯与性能汇总、合并规约、One-Pass 的寄存器约束、与 FlashAttention 的输出修正公式）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%BA%8C-cuda%E7%BC%96%E7%A8%8B%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96/52-cuda-online-softmax%E5%AE%9E%E7%8E%B0
-- **Online normalizer calculation for softmax**（Online Softmax 原始论文）：https://arxiv.org/abs/1805.02867
-- **FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness**：https://arxiv.org/abs/2205.14135
-- **PyTorch Numerical Accuracy**：https://docs.pytorch.org/docs/stable/notes/numerical_accuracy.html
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%BA%8C-cuda%E7%BC%96%E7%A8%8B%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96/52-cuda-online-softmax%E5%AE%9E%E7%8E%B0
+- https://arxiv.org/abs/1805.02867
+- https://arxiv.org/abs/2205.14135
+- https://docs.pytorch.org/docs/stable/notes/numerical_accuracy.html

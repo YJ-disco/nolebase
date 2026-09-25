@@ -283,9 +283,9 @@ mpirun -np 16 --hostfile hosts -x NCCL_IB_HCA=mlx5_0 \
 
 ## 参考
 
-- **NVIDIA NCCL Documentation**（原语 API、传输后端、环境变量）：https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/
-- **NCCL Collective Operations API**：https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/api/colls.html
-- **NCCL Tests**（`algbw` / `busbw` 的定义与测法）：https://github.com/NVIDIA/nccl-tests
-- **Bringing HPC Techniques to Deep Learning**（Ring AllReduce 的原始介绍）：https://andrew.gibiansky.com/blog/machine-learning/baidu-allreduce/
-- **PyTorch Distributed Overview**：https://pytorch.org/docs/stable/distributed.html
-- **AIInfraGuide 集群通信网络与 NCCL**（来源教程；本笔记取其第 3–9 节的通信库与算法部分，互联硬件部分拆入 [[03-多卡互联与集群网络]]）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%80-%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86/communication/collective-communication-primer
+- https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/
+- https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/api/colls.html
+- https://github.com/NVIDIA/nccl-tests
+- https://andrew.gibiansky.com/blog/machine-learning/baidu-allreduce/
+- https://pytorch.org/docs/stable/distributed.html
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%80-%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86/communication/collective-communication-primer

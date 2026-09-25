@@ -7,7 +7,7 @@ tags:
 
 Spanner（OSDI 2012 / TOCS 2013）是 Google 的**全球分布数据库**。前面几篇里，[GFS](01-GFS.md) 与 [Bigtable](02-Bigtable.md) 放弃了跨行的强一致，[Dynamo](03-Dynamo.md) 干脆把一致性做成可配置项 —— Spanner 走的是第三条路：**先把"一台机器能做到的事"当成目标，再用一个物理设施把它在全局范围内重新做出来。**
 
-论文对这件事的表述是：Spanner 是**第一个在全球规模上提供这些保证的系统**，而这套性质的关键使能者是 **TrueTime API 及其实现**。
+这个定位的表述是：Spanner 是**第一个在全球规模上提供这些保证的系统**，而关键使能者是 **TrueTime API 及其实现**。
 
 F1 是 Spanner 的落地案例 —— Google 广告后端的重写，从**手工分片多份的 MySQL** 迁过来。
 
@@ -32,7 +32,7 @@ $$tt.\text{earliest} \le t_{abs}(e_{now}) \le tt.\text{latest}$$
 
 ### 实现：两类时间源与它们的失效模式
 
-**为什么同时用 GPS 和原子钟** —— 论文的理由是**它们的失效模式不同**：
+**为什么同时用 GPS 和原子钟** —— 理由是**它们的失效模式不同**：
 
 | 时间源 | 失效模式 |
 | --- | --- |
@@ -44,7 +44,7 @@ $$tt.\text{earliest} \le t_{abs}(e_{now}) \le tt.\text{latest}$$
 具体实现是**每个数据中心一组 time master 机器 + 每台机器一个 timeslave daemon**：
 
 - **多数 master 带 GPS 接收机与专用天线**，这些 master **在物理上分散**，以降低天线故障、无线电干扰与欺骗的影响；
-- **其余 master 装原子钟，论文称之为 "Armageddon masters"** —— 论文还顺手给了成本说明：**原子钟并不那么贵，一个 Armageddon master 的成本与一个 GPS master 同一量级**；
+- **其余 master 装原子钟，称 "Armageddon masters"** —— 成本说明也很实在：**原子钟并不那么贵，一个 Armageddon master 的成本与一个 GPS master 同一量级**；
 - **所有 master 的时间参考定期互相比对**；每个 master 也**核对自己的参考推进时间的速率与本地时钟**，**出现显著分歧就自我驱逐**；
 - 每个 daemon **轮询多个 master**（附近数据中心与远处数据中心的 GPS master，加一些 Armageddon master），用 **Marzullo 算法的一个变体**检测并**剔除说谎者（liars）**，再把本地时钟同步到非说谎者；
 - **同步之间，Armageddon master 公布一个缓慢增长的不确定性**（由保守施加的最坏情况时钟漂移推出）；**GPS master 公布的不确定性通常接近 0**；
@@ -58,7 +58,7 @@ $$tt.\text{earliest} \le t_{abs}(e_{now}) \le tt.\text{latest}$$
 - 分解：**daemon 的轮询间隔目前是 30 秒，当前使用的漂移率设为 200 微秒/秒** —— 这两者一起解释了**锯齿的 0 到 6 ms 边界**；**剩下的 1 ms 来自到 time master 的通信延迟**；
 - 故障时会超出锯齿：**偶发的 time master 不可用会造成数据中心范围的 $\epsilon$ 增大**，过载的机器与网络链路会造成**偶发的局部尖峰**。
 
-**论文在这里给了一句决定性的边界说明**：
+**这里有一句决定性的边界说明**：
 
 > **方差不影响正确性，因为 Spanner 可以等掉不确定性；但 $\epsilon$ 变得太大时性能会退化。**
 
@@ -66,16 +66,16 @@ $$tt.\text{earliest} \le t_{abs}(e_{now}) \le tt.\text{latest}$$
 
 ### 实测数据里的两个真实事件
 
-论文用**跨距离达 2200 km 的数据中心、几千台 spanserver** 的数据画了 $\epsilon$ 的 90/99/99.9 分位。采样方式是**在 timeslave daemon 刚轮询完 time master 后**，因此**略去了本地时钟不确定性造成的锯齿**，测的是 **time master 不确定性（一般是 0）+ 到 time master 的通信延迟**。
+一组**跨距离达 2200 km 的数据中心、几千台 spanserver** 的实测给出了 $\epsilon$ 的 90/99/99.9 分位。采样方式是**在 timeslave daemon 刚轮询完 time master 后**，因此**略去了本地时钟不确定性造成的锯齿**，测的是 **time master 不确定性（一般是 0）+ 到 time master 的通信延迟**。
 
-结论是这两个因素**在决定 $\epsilon$ 的基值时一般不是问题**，但**尾部延迟会造成更高的 $\epsilon$**。论文点了两个真实事件：
+结论是这两个因素**在决定 $\epsilon$ 的基值时一般不是问题**，但**尾部延迟会造成更高的 $\epsilon$**。两个真实事件：
 
 - 3 月 30 日开始的**尾部延迟下降**，原因是**网络改进减少了瞬时的链路拥塞**；
 - 4 月 13 日 $\epsilon$ 增大（**持续约一小时**），原因是**一个数据中心的两台 time master 为例行维护而关闭**。
 
 ## 外部一致性：两条规则与四步证明
 
-这是整篇论文的核心。Spanner 要保证的是**外部一致性**（等价于线性一致性的分布式版本），论文把它化归成两条规则加一个传递性证明。
+这是整篇的核心。Spanner 要保证的是**外部一致性**（等价于线性一致性的分布式版本），它可以化归成两条规则加一个传递性证明。
 
 先定义事件：设写事务 $T_i$ 的提交请求到达其协调者 leader 的事件为 $e^i_{server}$，该事务的提交事件为 $e^i_{commit}$，事务 $T_i$ 分配的提交时间戳为 $s_i$。
 
@@ -127,7 +127,7 @@ $$t^{TM}_{safe} = \min_i(s^{prepare}_{i,g}) - 1$$
 - 与 Bigtable 一样，**事务内的写缓冲在客户端直到提交**；因此**事务内的读看不到本事务写的效果**（读返回所读数据的时间戳，而未提交的写还没有时间戳）。这个设计在 Spanner 里成立是因为**时间戳是读的一部分**；
 - 事务内的读用 **wound-wait** 避免死锁；
 - 客户端向相应 group 的 leader replica 发读，leader 获取读锁后读最新数据；事务开着期间客户端**发 keepalive** 防止参与者 leader 判它超时；
-- **由客户端驱动两阶段提交** —— 论文的理由很具体：**避免数据跨广域网链路传送两次**；
+- **由客户端驱动两阶段提交** —— 理由很具体：**避免数据跨广域网链路传送两次**；
 - **非协调者参与者 leader**：① 先获取写锁；② 选一个 **prepare 时间戳**，要求它**大于它此前为任何事务分配过的所有时间戳**（保持单调性）；③ 通过 Paxos 记录 prepare 记录；
 - **协调者 leader**：也先获取写锁，但**跳过 prepare 阶段**；在听到所有其他参与者 leader 的回复后为**整个事务**选时间戳 $s$，三个约束是
   $$s \ge \text{所有 prepare 时间戳},\quad s > \text{收到 commit 消息时的 } \text{TT.now}().\text{latest},\quad s > \text{该 leader 此前分配过的所有时间戳}$$
@@ -149,13 +149,13 @@ $$t^{TM}_{safe} = \min_i(s^{prepare}_{i,g}) - 1$$
 - **universe master** 是单例，主要是显示状态的控制台；**placement driver** 也是单例，负责**分钟级**的数据跨 zone 自动移动；
 - **每个 spanserver 负责 100 到 1000 个 tablet**，tablet 实现 `(key:string, timestamp:int64) → string`。**与 Bigtable 不同，Spanner 给数据分配时间戳** —— 这是它更像**多版本数据库**而不是 KV 的地方；
 - tablet 状态存在**一组 B 树状文件 + 一个预写日志**里，都放在 **Colossus**（GFS 的继任者）上；
-- **每个 spanserver 在每个 tablet 上实现一个 Paxos 状态机**。论文交代了一条演进：**早期 Spanner 支持一个 tablet 多个 Paxos 状态机**（可以让复制配置有更多变化），**但因为复杂而放弃了**。
+- **每个 spanserver 在每个 tablet 上实现一个 Paxos 状态机**。有一条演进：**早期 Spanner 支持一个 tablet 多个 Paxos 状态机**（可以让复制配置有更多变化），**但因为复杂而放弃了**。
 
 ## F1：落地案例
 
 - Spanner 从 **2011 年初**开始在**生产负载**下被实验性评估，作为 Google **广告后端 F1** 重写的一部分；
 - 这个后端**原本基于手工分片多份的 MySQL**；
-- **未压缩数据集有数十 TB** —— 论文特意说明"与许多 NoSQL 实例相比不大，但**大到足以让分片 MySQL 出现困难**"。
+- **未压缩数据集有数十 TB** —— "与许多 NoSQL 实例相比不大，但**大到足以让分片 MySQL 出现困难**"。
 
 这条对照对理解 Spanner 的定位有用：它的目标**是在一个中等规模、但需要强事务语义的数据集上，把手工分片的运维负担消掉**，而不是"比 NoSQL 更能装"。
 
@@ -193,5 +193,5 @@ $$t^{TM}_{safe} = \min_i(s^{prepare}_{i,g}) - 1$$
 
 ## 参考
 
-- James C. Corbett, Jeffrey Dean, Michael Epstein, Andrew Fikes, Christopher Frost, J. J. Furman, Sanjay Ghemawat, Andrey Gubarev, Christopher Heiser, Peter Hochschild, Wilson Hsieh, Sebastian Kanthak, Eugene Kogan, Hongyi Li, Alexander Lloyd, Sergey Melnik, David Mwaura, David Nagle, Sean Quinlan, Rajesh Rao, Lindsay Rolig, Yasushi Saito, Michal Szymaniak, Christopher Taylor, Ruth Wang, Dale Woodford. *Spanner: Google's Globally-Distributed Database*. OSDI 2012（TOCS 31(3), 2013）.（TrueTime API 与实现、$\epsilon$ 的锯齿与实测、外部一致性的两条规则与证明、safe time、读写与快照事务、directory 与 zone 的组织）
-- Jeff Shute, Mircea Oancea, Stephan Ellner, Ben Handy, Eric Rollins, Bart Samwel, Radek Vingralek, Chad Whipkey, Xin Chen, Beat Jegerlehner, Kyle Littlefield, Phoenix Tong. *F1: A Distributed SQL Database That Scales*. VLDB 2012.（F1 的完整设计；**本篇只用到了它在 Spanner 论文里被引述的定位与规模**）
+- J. C. Corbett, J. Dean, M. Epstein, A. Fikes, C. Frost, J. J. Furman, S. Ghemawat, A. Gubarev, C. Heiser, P. Hochschild, W. Hsieh, S. Kanthak, E. Kogan, H. Li, A. Lloyd, S. Melnik, D. Mwaura, D. Nagle, S. Quinlan, R. Rao, L. Rolig, Y. Saito, M. Szymaniak, C. Taylor, R. Wang, D. Woodford. *Spanner: Google's Globally-Distributed Database*. OSDI 2012（TOCS 31(3), 2013）.
+- J. Shute, M. Oancea, S. Ellner, B. Handy, E. Rollins, B. Samwel, R. Vingralek, C. Whipkey, X. Chen, B. Jegerlehner, K. Littlefield, P. Tong. *F1: A Distributed SQL Database That Scales*. VLDB 2012.

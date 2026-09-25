@@ -110,8 +110,8 @@ $$\text{通信量}：3\Psi \quad(\underbrace{\Psi}_{\text{前向 AllGather}} + \
 
 ## 参考
 
-- **AIInfraGuide 第5章 ZeRO 显存优化系列**（冗余分析、三阶段的切分对象与显存/通信公式、Offload 与 Infinity、选型表、与 FSDP 的对应）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%89-%E5%88%86%E5%B8%83%E5%BC%8F%E8%AE%AD%E7%BB%83/%E7%AC%AC5%E7%AB%A0-zero%E7%B3%BB%E5%88%97
-- **ZeRO: Memory Optimizations Toward Training Trillion Parameter Models**：https://arxiv.org/abs/1910.02054
-- **ZeRO-Offload: Democratizing Billion-Scale Model Training**：https://arxiv.org/abs/2101.06840
-- **ZeRO-Infinity: Breaking the GPU Memory Wall for Extreme Scale Deep Learning**：https://arxiv.org/abs/2104.07857
-- **PyTorch FSDP**：https://pytorch.org/docs/stable/fsdp.html
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%89-%E5%88%86%E5%B8%83%E5%BC%8F%E8%AE%AD%E7%BB%83/%E7%AC%AC5%E7%AB%A0-zero%E7%B3%BB%E5%88%97
+- https://arxiv.org/abs/1910.02054
+- https://arxiv.org/abs/2101.06840
+- https://arxiv.org/abs/2104.07857
+- https://pytorch.org/docs/stable/fsdp.html

@@ -208,8 +208,8 @@ int col = threadIdx.x & 7;
 
 ## 参考
 
-- **AIInfraGuide 4.1 CUDA GEMM 算子性能优化**（性能指标、Roofline 与带宽视角、Wave 模型与 L2 命中率、八个优化台阶与逐级收益、Thread Tiling 的外积分解与共享内存访问量推导、float4 与 Bank Conflict 的耦合、两级双缓冲、`cp.async` 与 CUTLASS 多级流水线、SASS 级手段、推荐参数表、写法优化）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%BA%8C-cuda%E7%BC%96%E7%A8%8B%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96/41-cuda-gemm%E7%AE%97%E5%AD%90%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96
-- **How to Optimize a CUDA Matmul Kernel for cuBLAS-like Performance**（该优化序列的经典出处，Simon Boehm）：https://siboehm.com/articles/22/CUDA-MMM
-- **CUTLASS**（生产级 GEMM 模板库）：https://github.com/NVIDIA/cutlass
-- **cuBLAS Documentation**：https://docs.nvidia.com/cuda/cublas/
-- **NVIDIA Nsight Compute — Stall Reasons**：https://docs.nvidia.com/nsight-compute/
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%BA%8C-cuda%E7%BC%96%E7%A8%8B%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96/41-cuda-gemm%E7%AE%97%E5%AD%90%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96
+- https://siboehm.com/articles/22/CUDA-MMM
+- https://github.com/NVIDIA/cutlass
+- https://docs.nvidia.com/cuda/cublas/
+- https://docs.nvidia.com/nsight-compute/

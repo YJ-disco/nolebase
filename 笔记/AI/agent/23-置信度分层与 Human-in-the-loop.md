@@ -204,7 +204,7 @@ Unknown Case
 
 ## 参考
 
-- **选择性预测的形式化（$g$ 函数、覆盖率与风险的定义、AURC 及其不宜作单一指标）、MSP 的 OOD 缺陷、Energy-based 与 Mahalanobis、MC Dropout 的 10–50 次与两类不确定性、Chow's Rule、ECE 的 M=15 与 <0.05 判据、三种校准方法、Conformal / OOD 的对照**：https://inferensys.com/glossary/preemptive-algorithmic-cybersecurity/ai-guardrail-architectures/selective-prediction 、https://inferensys.com/glossary/algorithmic-trust-and-authority-signals/confidence-calibration/selective-classification
-- **AUROC 的定义与「85% 意味着什么」、SAC 指标、风险-覆盖权衡**：https://www.alphaxiv.org/zh/abs/2302.11874
-- **覆盖率与风险的公式、AURC 的计算**：https://ar5iv.arxiv.org/html/2409.18645
-- **523 个 ImageNet 分类器的研究（知识蒸馏一致改进不确定性估计、温度缩放同时增强 AUROC 与选择性预测）**：https://www.alphaxiv.org/zh/abs/2302.11874
+- https://inferensys.com/glossary/preemptive-algorithmic-cybersecurity/ai-guardrail-architectures/selective-prediction 、https://inferensys.com/glossary/algorithmic-trust-and-authority-signals/confidence-calibration/selective-classification
+- https://www.alphaxiv.org/zh/abs/2302.11874
+- https://ar5iv.arxiv.org/html/2409.18645
+- https://www.alphaxiv.org/zh/abs/2302.11874

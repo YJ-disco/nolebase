@@ -212,7 +212,7 @@ SGLang 的答案是**把所有请求的历史 KV 组织成一棵前缀树（Radi
 
 ## 参考
 
-- **Prefill / Decode 的完整对照（矩阵形状、瓶颈、并行性、TTFT/TPOT）、五个坑、PagedAttention 与量化的效果**：http://prachub.com/interview-questions/explain-kv-cache-in-transformer-inference
-- **KV 公式、MHA/GQA/MQA 的分组机制与 Llama 各代的 KV heads 与每 token 占用、Llama-3 70B 的 64/8 配置**：https://sampooni.github.io/kv-cache-docs/chapters/ch02-background.html
-- **7B 模型的显存算例（2048→1.34GB、32K→21GB）、PagedAttention 的块表与 B=16、APC 的块哈希、RadixAttention 的前缀树、真实业务里重复的四类前缀**：https://blog.csdn.net/u013970991/article/details/163229125
-- **多轮复用与编辑失效、chat template 未入前缀的正确性陷阱、KV 量化的精度取舍、该监控的三个指标**：https://aiglossary.xyz/glossary/kv-cache/
+- http://prachub.com/interview-questions/explain-kv-cache-in-transformer-inference
+- https://sampooni.github.io/kv-cache-docs/chapters/ch02-background.html
+- https://blog.csdn.net/u013970991/article/details/163229125
+- https://aiglossary.xyz/glossary/kv-cache/

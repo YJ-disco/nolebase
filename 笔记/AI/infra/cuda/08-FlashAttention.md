@@ -207,8 +207,8 @@ V1 与 V2 是算法与并行策略的改进。往后的路线转向**吃满新�
 
 ## 参考
 
-- **AIInfraGuide 6.1 FlashAttention V1 详解 / 6.2 FlashAttention V2 详解**（标准 Attention 的 IO 与算术强度、两个关键技术、IO 复杂度推导与下界、反向重计算、V1 的实际加速与利用率、V2 的三个改进及其量化收益、Causal Mask 的块级跳过、性能对比表、logsumexp）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%BA%8C-cuda%E7%BC%96%E7%A8%8B%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96/61-flashattention-v1%E8%AF%A6%E8%A7%A3
-- **FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness**（IO 复杂度与下界证明）：Dao et al., https://arxiv.org/abs/2205.14135
-- **FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning**：https://arxiv.org/abs/2307.08691
-- **FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision**：https://arxiv.org/abs/2407.08608
-- **Online normalizer calculation for softmax**：https://arxiv.org/abs/1805.02867
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%BA%8C-cuda%E7%BC%96%E7%A8%8B%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96/61-flashattention-v1%E8%AF%A6%E8%A7%A3
+- Dao et al., https://arxiv.org/abs/2205.14135
+- https://arxiv.org/abs/2307.08691
+- https://arxiv.org/abs/2407.08608
+- https://arxiv.org/abs/1805.02867

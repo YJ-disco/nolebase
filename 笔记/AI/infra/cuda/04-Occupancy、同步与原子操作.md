@@ -256,8 +256,8 @@ __device__ double atomicAddDouble(double* addr, double val) {
 
 ## 参考
 
-- **AIInfraGuide 2.3 Occupancy 与资源分配 / 2.4 同步与原子操作**（Occupancy 定义与延迟隐藏的不等式、三代架构资源对照、寄存器的 256 粒度与手算表、`__launch_bounds__` 的取值方向、Occupancy 反例与三种代价、同步三级与 `__syncthreads` 陷阱、Memory Fence 三级、原子清单与代价、CAS 万能原语、四种降冲突策略、Cooperative Groups）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%BA%8C-cuda%E7%BC%96%E7%A8%8B%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96/23-occupancy%E4%B8%8E%E8%B5%84%E6%BA%90%E5%88%86%E9%85%8D
-- **CUDA C++ Programming Guide — Synchronization Functions / Atomics**：https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#atomics
-- **CUDA C++ Best Practices Guide — Occupancy**：https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#occupancy
-- **CUDA C++ Programming Guide — Cooperative Groups**：https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#cooperative-groups
-- **CUDA Occupancy Calculator**（API 与表格）：https://docs.nvidia.com/cuda/cuda-occupancy-calculator/index.html
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%BA%8C-cuda%E7%BC%96%E7%A8%8B%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96/23-occupancy%E4%B8%8E%E8%B5%84%E6%BA%90%E5%88%86%E9%85%8D
+- https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#atomics
+- https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#occupancy
+- https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#cooperative-groups
+- https://docs.nvidia.com/cuda/cuda-occupancy-calculator/index.html

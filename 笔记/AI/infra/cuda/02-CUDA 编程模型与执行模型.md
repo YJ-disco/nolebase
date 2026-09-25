@@ -245,7 +245,7 @@ offset=1:  [16+20=36]
 
 ## 参考
 
-- **AIInfraGuide 1.2 CUDA 编程模型 / 2.1 Warp 与执行模型**（三级层次与硬件限制、索引计算与 grid-stride、Block 大小选择、SIMT vs SIMD、Divergence 的代价与量化、四条 Shuffle 指令与蝶形归约、Vote / Match 原语）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%BA%8C-cuda%E7%BC%96%E7%A8%8B%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96/12-cuda%E7%BC%96%E7%A8%8B%E6%A8%A1%E5%9E%8B
-- **CUDA C++ Programming Guide — Programming Model**：https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#programming-model
-- **CUDA C++ Programming Guide — Warp Shuffle Functions**：https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#warp-shuffle-functions
-- **Volta Architecture Whitepaper**（Independent Thread Scheduling）：https://images.nvidia.com/content/volta-architecture/pdf/volta-architecture-whitepaper.pdf
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%BA%8C-cuda%E7%BC%96%E7%A8%8B%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96/12-cuda%E7%BC%96%E7%A8%8B%E6%A8%A1%E5%9E%8B
+- https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#programming-model
+- https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#warp-shuffle-functions
+- https://images.nvidia.com/content/volta-architecture/pdf/volta-architecture-whitepaper.pdf

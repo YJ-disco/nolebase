@@ -232,8 +232,8 @@ CUDA_CHECK(cudaDeviceSynchronize());     // 抓执行错误
 
 ## 参考
 
-- **AIInfraGuide 1.1 CUDA 开发环境搭建 / 1.4 第一个实用 Kernel**（版本兼容矩阵、nvcc 编译流程与选项、arch 代号、CMake 集成、五步流程与边界检查）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%BA%8C-cuda%E7%BC%96%E7%A8%8B%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96/11-cuda%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA
-- **CUDA Installation Guide for Linux**：https://docs.nvidia.com/cuda/cuda-installation-guide-linux/
-- **CUDA C++ Programming Guide — NVCC**：https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/
-- **CUDA Samples（`deviceQuery` 等验证工具）**：https://github.com/NVIDIA/cuda-samples
-- **CMake — CUDA Support**：https://cmake.org/cmake/help/latest/prop_tgt/CUDA_ARCHITECTURES.html
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%BA%8C-cuda%E7%BC%96%E7%A8%8B%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96/11-cuda%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA
+- https://docs.nvidia.com/cuda/cuda-installation-guide-linux/
+- https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/
+- https://github.com/NVIDIA/cuda-samples
+- https://cmake.org/cmake/help/latest/prop_tgt/CUDA_ARCHITECTURES.html

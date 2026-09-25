@@ -261,12 +261,12 @@ $$\text{FP16 算力} = \text{SM 数} \times \text{每 SM 的 FP16 Core 数} \tim
 
 ## 参考
 
-- **NVIDIA CUDA C++ Programming Guide**（SM 结构、存储层次、Warp 与 SIMT）：https://docs.nvidia.com/cuda/cuda-c-programming-guide/
-- **NVIDIA Hopper 架构深入解析**（H100 SXM5 与 PCIe 的逐项规格、每 SM 的 CUDA Core / Tensor Core 数量）：https://blogs.nvidia.com.tw/blog/nvidia-hopper-architecture-in-depth/
-- **NVIDIA H100 Tensor Core GPU Architecture Whitepaper**：https://resources.nvidia.com/en-us-tensor-core/gtc22-whitepaper-hopper
-- **NVIDIA A100 Tensor Core GPU Architecture Whitepaper**：https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvidia-ampere-architecture-whitepaper.pdf
-- **NVIDIA Blackwell Architecture Technical Brief**：https://www.nvidia.com/en-us/data-center/technologies/blackwell-architecture/
-- **PTX ISA — Warpgroup Level Matrix Operations**（`wgmma` 的形状与元素类型）：https://docs.nvidia.com/cuda/parallel-thread-execution/
-- **Roofline: An Insightful Visual Performance Model**：https://dl.acm.org/doi/10.1145/1498765.1498785
-- **ZeRO: Memory Optimizations Toward Training Trillion Parameter Models**（18 B/参数的口径与分片思路）：https://arxiv.org/abs/1910.02054
-- **AIInfraGuide GPU 基础知识**（来源教程；本笔记按其结构重写，MMA 形状一处已按 PTX 文档修正）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%80-%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86/gpu/gpu-basics
+- https://docs.nvidia.com/cuda/cuda-c-programming-guide/
+- https://blogs.nvidia.com.tw/blog/nvidia-hopper-architecture-in-depth/
+- https://resources.nvidia.com/en-us-tensor-core/gtc22-whitepaper-hopper
+- https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvidia-ampere-architecture-whitepaper.pdf
+- https://www.nvidia.com/en-us/data-center/technologies/blackwell-architecture/
+- https://docs.nvidia.com/cuda/parallel-thread-execution/
+- https://dl.acm.org/doi/10.1145/1498765.1498785
+- https://arxiv.org/abs/1910.02054
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%80-%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86/gpu/gpu-basics

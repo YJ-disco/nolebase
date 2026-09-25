@@ -19,7 +19,7 @@ tags:
 **经典范式**
 
 - 03 · [[03-ReAct|ReAct]] —— 动作空间 `A ∪ L`、工具定义三要素、提示词模板、输出解析正则、官方实验数据、失败模式分布（search error 23% / hallucination 6%）、人可以改轨迹
-- 04 · [[04-Plan-and-Solve|Plan-and-Solve]] —— 论文的零样本 PS Prompting 与工程上的 PS Agent 是两个层次；PS/PS+ 提示原文、错误类型分布、计划存在率
+- 04 · [[04-Plan-and-Solve|Plan-and-Solve]] —— 论文的零样本 PS Prompting 与工程上的 PS Agent 是两个层次；PS/PS+ 提示模板、错误类型分布、计划存在率
 - 05 · [[05-Reflection|Reflection]] —— 语言强化与语义梯度、三个组件、Evaluator 的三种实现、记忆两层（k=3）、HumanEval 91%、消融实验与三条局限
 
 **框架**

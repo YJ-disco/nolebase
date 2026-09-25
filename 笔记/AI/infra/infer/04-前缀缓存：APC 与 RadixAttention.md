@@ -173,9 +173,9 @@ SGLang 的 **RadixAttention** 用一棵 **Radix Tree（压缩前缀树）**管�
 
 ## 参考
 
-- **vLLM Design — Automatic Prefix Caching**（块哈希的三分量构成、只缓存填满的块、`cache_salt`）：https://docs.vllm.ai/en/latest/design/prefix_caching.html
-- **vLLM V1 发布说明**（零开销前缀缓存、0% 命中率下吞吐下降 <1%）：https://blog.vllm.ai/2025/01/27/v1-alpha-release.html
-- **vLLM V1 源码**（`kv_cache_utils.py` 的 `NONE_HASH` 链式块哈希、`block_pool.py` 的四张表与 `touch`/`free_blocks`）：https://github.com/vllm-project/vllm/blob/main/vllm/v1/core/kv_cache_utils.py
-- **SGLang / RadixAttention 论文**：Zheng et al., *SGLang: Efficient Execution of Structured Language Model Programs*, NeurIPS 2024，https://arxiv.org/abs/2312.07104
-- **vLLM/SGLang/TensorRT-LLM 2026 对比基准**（H100 SXM5、Llama-3.3-70B FP8、50 并发下的差距与 RadixAttention 的适用面）：https://news.creeta.com/en/llm-inference-engine-benchmarks-2026-vllm-sglang-tensorrt
-- **AIInfraGuide 2.3 Prefix Cache 与 RadixAttention**（块哈希链式串联、逆序入队、四张表、两侧对照）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E5%9B%9B-%E6%8E%A8%E7%90%86%E4%BC%98%E5%8C%96/%E7%AC%AC2%E7%AB%A0-%E6%8E%A8%E7%90%86%E5%BC%95%E6%93%8E%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF/23-prefix-cache-%E4%B8%8E-radixattention
+- https://docs.vllm.ai/en/latest/design/prefix_caching.html
+- https://blog.vllm.ai/2025/01/27/v1-alpha-release.html
+- https://github.com/vllm-project/vllm/blob/main/vllm/v1/core/kv_cache_utils.py
+- Zheng et al., *SGLang: Efficient Execution of Structured Language Model Programs*, NeurIPS 2024，https://arxiv.org/abs/2312.07104
+- https://news.creeta.com/en/llm-inference-engine-benchmarks-2026-vllm-sglang-tensorrt
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E5%9B%9B-%E6%8E%A8%E7%90%86%E4%BC%98%E5%8C%96/%E7%AC%AC2%E7%AB%A0-%E6%8E%A8%E7%90%86%E5%BC%95%E6%93%8E%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF/23-prefix-cache-%E4%B8%8E-radixattention

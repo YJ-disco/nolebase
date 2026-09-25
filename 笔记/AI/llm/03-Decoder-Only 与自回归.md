@@ -112,6 +112,6 @@ attn_probs  = softmax(attn_scores)
 
 ## 参考
 
-- 来源：《Hello-Agents》第三章 §3.1.3
+- 《Hello-Agents》第三章 §3.1.3
 - Radford, A., et al. Improving language understanding by generative pre-training. OpenAI, 2018.
-- 三种架构的对照与因果掩码的位置：本专栏 [[02-Transformer 架构]] 的 Encoder-Decoder 一节
+- 本专栏 [[02-Transformer 架构]] 的 Encoder-Decoder 一节

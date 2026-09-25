@@ -226,10 +226,10 @@ MoE 并行与 All-to-All 的细节属于训练侧，见 [[00-训练专栏导览]
 
 ## 参考
 
-- **AIInfraGuide 3.4 Transformer 前馈网络 FFN 深入理解**（角色定位、展开-压缩的四条理由、ReLU/GELU/Swish 对比、GLU 与 SwiGLU、参数量守恒推导、$d_{ff}$ 对齐、Megatron 切分方案、MoE）：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%80-%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86/transformer/34-transformer%E5%89%8D%E9%A6%88%E7%BD%91%E7%BB%9Cffn%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3
-- **Attention Is All You Need**（$d_{ff} = 4d_{model}$ 的原始设定）：https://arxiv.org/abs/1706.03762
-- **Gaussian Error Linear Units (GELUs)**：https://arxiv.org/abs/1606.08415
-- **Searching for Activation Functions**（Swish）：https://arxiv.org/abs/1710.05941
-- **GLU Variants Improve Transformer**（SwiGLU）：https://arxiv.org/abs/2002.05202
-- **Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism**（FFN 的列切/行切方案）：https://arxiv.org/abs/1909.08053
-- **Switch Transformers**（MoE 与路由）：https://arxiv.org/abs/2101.03961
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%B8%80-%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86/transformer/34-transformer%E5%89%8D%E9%A6%88%E7%BD%91%E7%BB%9Cffn%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3
+- https://arxiv.org/abs/1706.03762
+- https://arxiv.org/abs/1606.08415
+- https://arxiv.org/abs/1710.05941
+- https://arxiv.org/abs/2002.05202
+- https://arxiv.org/abs/1909.08053
+- https://arxiv.org/abs/2101.03961

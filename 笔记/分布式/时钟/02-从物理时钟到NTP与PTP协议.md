@@ -200,7 +200,9 @@ TC 的存在正是为了对付上面那个「路径不对称」问题：报文�
 
 ## 参考
 
-- D. Mills et al. *Network Time Protocol Version 4: Protocol and Algorithms Specification*. RFC 5905, IETF, 2010.（NTP 报文各字段与 $\theta$、$\delta$ 两条公式的出处）
-- IEEE. *IEEE 1588-2008 Standard for a Precision Clock Synchronization Protocol for Networked Measurement and Control Systems*. 2008.（PTP 的规范；$T_1$–$T_4$ 与 meanPathDelay / offset 两条公式）
-- 文中 NTP 的抓包观察（自动同步间隔、`sntp` 主动同步、Root Delay 量级）来自作者自测，不属于上述规范的内容。
-- 硬件/软件时间戳的抖动区间（10–100 µs 与 10–100 ns）与 BC 每跳 50–100 ns 的量级来自厂商应用文档的转述，**未核对规范原文**。
+- D. Mills et al. *Network Time Protocol Version 4: Protocol and Algorithms Specification*. RFC 5905, IETF, 2010.
+- IEEE. *IEEE 1588-2008 Standard for a Precision Clock Synchronization Protocol for Networked Measurement and Control Systems*. 2008.
+
+**可信度说明**：文中 NTP 的抓包观察（自动同步间隔、`sntp` 主动同步、Root Delay 量级）来自作者自测，不属于上述规范的内容。
+
+**可信度说明**：硬件/软件时间戳的抖动区间（10–100 µs 与 10–100 ns）与 BC 每跳 50–100 ns 的量级来自厂商应用文档的转述，**未核对规范原文**。

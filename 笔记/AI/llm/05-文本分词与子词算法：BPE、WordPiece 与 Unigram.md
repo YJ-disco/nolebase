@@ -198,7 +198,7 @@ response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
 
 ## 参考
 
-- 来源：《Hello-Agents》第三章 §3.2.2、§3.2.3
-- Gage, P. A new algorithm for data compression. C Users Journal, 1994.（BPE）
-- Schuster, M., & Nakajima, K. Japanese and korean voice search. ICASSP, 2012.（WordPiece）
+- 《Hello-Agents》第三章 §3.2.2、§3.2.3
+- Gage, P. A new algorithm for data compression. C Users Journal, 1994.
+- Schuster, M., & Nakajima, K. Japanese and korean voice search. ICASSP, 2012.
 - Kudo, T., & Richardson, J. SentencePiece. arXiv:1808.06226, 2018.

@@ -66,8 +66,8 @@ tags:
 
 ## 参考
 
-- **AIInfraGuide 模块二（CUDA 编程与算子优化）**：https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%BA%8C-cuda%E7%BC%96%E7%A8%8B%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96/12-cuda%E7%BC%96%E7%A8%8B%E6%A8%A1%E5%9E%8B
-- **CUDA C++ Programming Guide**：https://docs.nvidia.com/cuda/cuda-c-programming-guide/
-- **CUDA C++ Best Practices Guide**：https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/
-- **NVIDIA Nsight Compute**：https://docs.nvidia.com/nsight-compute/
-- **FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness**：https://arxiv.org/abs/2205.14135
+- https://caomaolufei.github.io/AIInfraGuide/guides/%E6%A8%A1%E5%9D%97%E4%BA%8C-cuda%E7%BC%96%E7%A8%8B%E4%B8%8E%E7%AE%97%E5%AD%90%E4%BC%98%E5%8C%96/12-cuda%E7%BC%96%E7%A8%8B%E6%A8%A1%E5%9E%8B
+- https://docs.nvidia.com/cuda/cuda-c-programming-guide/
+- https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/
+- https://docs.nvidia.com/nsight-compute/
+- https://arxiv.org/abs/2205.14135

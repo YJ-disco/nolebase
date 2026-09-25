@@ -10,7 +10,7 @@ Paxos 的三份材料分工不同，合起来才完整：
 | 材料 | 解决的问题 |
 | --- | --- |
 | *Paxos Made Simple*（Lamport, 2001） | 把算法**推导**出来 —— 从"只允许一个值被选中"这条要求一步步推出两阶段协议 |
-| *Paxos Made Practical*（Mazières） | 论文**没写的那部分**：怎么就多个值达成一致、机器来去时"多数派"指谁的多数 |
+| *Paxos Made Practical*（Mazières） | 文献**没写的那部分**：怎么就多个值达成一致、机器来去时"多数派"指谁的多数 |
 | *Paxos Made Live*（Chandra, Griesemer, Redstone, 2007） | 把伪码变成生产系统时撞上的三类问题 |
 
 先看 *Made Simple*。它开篇的一句话值得记住：**"Paxos 算法用平实的英语表述时非常简单"** —— 难的不是算法，是把上面那条安全性要求推出来的那条路。
@@ -151,7 +151,7 @@ learner 要知道某个值被选中，就必须知道某个提案被多数派接
 
 ## 活性：dueling proposers 与 leader
 
-活性不是白给的。论文给了一个具体的恶性循环：两个 proposer 各自不断提出编号递增的提案，**没有一个能被选中**。
+活性不是白给的。一个具体的恶性循环：两个 proposer 各自不断提出编号递增的提案，**没有一个能被选中**。
 
 - proposer $p$ 完成编号 $n_1$ 的 phase 1；
 - 另一个 proposer $q$ 完成编号 $n_2 > n_1$ 的 phase 1；
@@ -161,7 +161,7 @@ learner 要知道某个值被选中，就必须知道某个提案被多数派接
 
 **解法**：选一个**唯一的 distinguished proposer（leader）**，只有它尝试提提案。如果它能与多数派通信、且用的编号大于任何已用过的编号，就能成功。
 
-论文在这里直接引了 FLP（见 [[01-不可能性结果：FLP 与部分同步]]）：**一个可靠地选举 proposer 的算法必须使用随机性或真实时间**（例如超时）。但紧接着是一句关键的边界说明：
+这里直接引了 FLP（见 [[01-不可能性结果：FLP 与部分同步]]）：**一个可靠地选举 proposer 的算法必须使用随机性或真实时间**（例如超时）。但紧接着是一句关键的边界说明：
 
 > **安全性不依赖于选举的成功与否。**
 
@@ -208,9 +208,9 @@ learner 要知道某个值被选中，就必须知道某个提案被多数派接
 
 ### 成员变更：用状态机自己管
 
-服务器集合可变时，需要一种机制确定"哪些服务器实现哪些实例"。论文给的最简做法是**通过状态机本身**：把**当前服务器集合作为状态的一部分**，用普通的状态机命令来改变它。
+服务器集合可变时，需要一种机制确定"哪些服务器实现哪些实例"。最简做法是**通过状态机本身**：把**当前服务器集合作为状态的一部分**，用普通的状态机命令来改变它。
 
-配合上面的流水线：允许 leader 超前 $\alpha$ 条命令，让**"执行第 $i+\alpha$ 个实例的服务器集合"由第 $i$ 条命令执行后的状态指定** —— 论文说这允许实现**任意复杂**的重配置算法。
+配合上面的流水线：允许 leader 超前 $\alpha$ 条命令，让**"执行第 $i+\alpha$ 个实例的服务器集合"由第 $i$ 条命令执行后的状态指定** —— 这允许实现**任意复杂**的重配置算法。
 
 ## 文献没写的那部分：Paxos Made Practical
 
@@ -223,17 +223,17 @@ Mazières 的这篇开篇有一句很准的评价：
 1. **系统必须就多个值达成一致**（不是单个值）；
 2. **机器会来会去** —— 如果正在用 Paxos 就"复制这个服务的机器集合"达成一致，那么"多数派"是指**旧的**副本集合的多数、**新的**副本集合的多数，还是两者的多数？新集合是否已拥有旧集合的全部状态？变更时正在进行的操作怎么办？如果机器失败、没有任何新副本收到 decide 消息怎么办？
 
-论文把 Viewstamped Replication 视为唯一做过全面努力的工作，但指出它两个不足：一是用分布式事务来描述（带来应用并不都需要的大量复杂度），二是**假设可能的 cohort 集合固定不变**。
+Viewstamped Replication 是唯一做过全面努力的工作，但有两个不足：一是用分布式事务来描述（带来应用并不都需要的大量复杂度），二是**假设可能的 cohort 集合固定不变**。
 
 第二条的具体后果值得记住：**要求"全部可能 cohort 的多数"参与，而不是"活跃 cohort 的多数"**。举例 —— 一个组有 5 个 cohort，其中 2 个失败，组会重配置为 3 个 cohort 继续运行；但**若在这 2 个修好之前再失败 1 个，整个组就失败** —— 而这本来是不必要的，因为 **3 个活跃 cohort 的多数仍然在运行**。所以需要能**动态增删 cohort**（用于迁移维护、负载均衡）。
 
 ## 从伪码到生产系统：Paxos Made Live
 
-Google 用 Paxos 重建 Chubby 的复制层（替换掉一个有复制 bug 史、复制机制**没有基于有证明的算法**的第三方数据库）。这篇论文最有价值的是它把问题分了类：
+Google 用 Paxos 重建 Chubby 的复制层（替换掉一个有复制 bug 史、复制机制**没有基于有证明的算法**的第三方数据库）。它最有价值的一点是把问题分了类：
 
 | 类别 | 内容 |
 | --- | --- |
-| **文献里的算法缺口** | 论文没写、但生产必须决定的东西 |
+| **文献里的算法缺口** | 文献没写、但生产必须决定的东西 |
 | **软件工程挑战** | 几千行代码的正确性怎么建立 |
 | **意外故障** | 算法之外的失败模式 |
 
@@ -268,7 +268,7 @@ Google 用 Paxos 重建 Chubby 的复制层（替换掉一个有复制 bug 史�
 
 ## 参考
 
-- Leslie Lamport. *Paxos Made Simple*. ACM SIGACT News, Vol. 32, No. 4, December 2001.（P1–P2c 的完整推导、两阶段算法、learner 的三种设计、dueling proposers、Multi-Paxos）
-- David Mazières. *Paxos Made Practical*.（文献缺口清单；Viewstamped Replication 的两点不足；成员动态增删的需求）
-- Tushar Chandra, Robert Griesemer, Joshua Redstone. *Paxos Made Live — An Engineering Perspective*. PODC 2007.（Chubby 的复制层重建；算法缺口 / 软件工程 / 意外故障三类问题）
-- Idit Keidar, Sergio Rajsbaum. *On the Cost of Fault-Tolerant Consensus When There Are No Faults — A Tutorial*. MIT-LCS-TR-821, 2001.（"phase 2 的成本是最优的"这一结论的出处，经 *Paxos Made Simple* 引用）
+- L. Lamport. *Paxos Made Simple*. ACM SIGACT News 32(4), 2001.
+- T. Chandra, R. Griesemer, J. Redstone. *Paxos Made Live — An Engineering Perspective*. PODC 2007.
+- D. Mazières. *Paxos Made Practical*.
+- I. Keidar, S. Rajsbaum. *On the Cost of Fault-Tolerant Consensus When There Are No Faults — A Tutorial*. MIT-LCS-TR-821, 2001.
