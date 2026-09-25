@@ -7,16 +7,15 @@ tags:
 
 本目录收**在 GPU 上写 kernel** 的那一层：线程怎么组织、访存怎么优化、经典算子怎么从朴素实现一步步逼近硬件上限。
 
-它在 `AI/infra/` 这棵子树里的位置：
+它与相邻专栏的边界是**关注点而不是目录层级**：
 
-| 目录 | 关注什么 |
-| --- | --- |
-| `AI/infra/gpu/` | 硬件本身 —— SM、存储层次、算力与带宽、互联 |
-| **`AI/infra/cuda/`**（本目录） | 在硬件上写 kernel —— 编程模型、访存优化、经典算子 |
-| `AI/infra/train/` | 用多块硬件训练 —— 框架、并行策略、通信、显存 |
-| `AI/infra/`（根） | 把模型服务出去 —— 调度、显存管理、推理引擎、数值精度 |
+| 不收 | 去哪看 | 本专栏只关心 |
+| --- | --- | --- |
+| 硬件本身 —— SM 微架构、存储层次、算力与带宽、互联拓扑 | [[00-GPU 与加速器专栏导览\|GPU 与加速器]] | 这些硬件能力如何约束 kernel 的写法 |
+| 用多块硬件训练 —— 框架、并行策略、通信、显存账本 | [[00-训练专栏导览\|训练]] | 单个 kernel 内部的优化 |
+| 把模型服务出去 —— 调度、显存管理、推理引擎、数值精度 | [[00-AI Infra 专栏导览\|AI Infra]] | 算子本身怎么逼近硬件上限 |
 
-四块是一条链：**硬件 → 写算子 → 训练 → 服务**。本目录是链条第二环。
+换个说法：`gpu/` 回答“这块卡有多少算力、多少带宽”，`train/` 回答“多块卡怎么组织起来训练”，本专栏回答“**怎么让一个 kernel 跑满这些能力**”。
 
 ## 阅读顺序
 
@@ -45,17 +44,6 @@ tags:
 > **一、绝大多数 kernel 的瓶颈不在计算而在访存。** 优化的主线是**让同一份数据被算更多次**（提升算术强度）。Reduce 靠共享内存与 Shuffle 减少全局访存，GEMM 靠 tiling 把复用提到寄存器，Softmax 靠 Online 算法少扫一遍，FlashAttention 靠分块把 $O(N^2)$ 的 HBM 读写降到 $O(N^2d^2/M)$。硬件判据见 [[01-GPU 硬件架构与存储层次]]。
 >
 > **二、生产环境用库，手写 kernel 的价值在于理解瓶颈。** CUB 的 `DeviceReduce` 稳定在 90%+ 带宽利用率，cuBLAS / CUTLASS 在大矩阵上到 90%+ 峰值，FlashAttention 是 Attention 的既定答案。**手写的意义是「读 profiler 时知道该往哪看」**，不是替代它们。
-
-## 待建
-
-| 概念 | 说明 |
-| --- | --- |
-| **AI 编译器** | Triton 的 Block-level 编程模型、torch.compile 的 Dynamo + Inductor 与 Graph Break 问题、TVM / XLA 的定位差异 |
-| **性能分析工具链** | Nsight Systems 的 CPU-GPU 全链路 trace 与 GPU idle gap 定位、Nsight Compute 的 SOL 面板与 Kernel 对比分析 |
-| **PagedAttention 的 CUDA 实现** | 虚拟页到物理页的映射在 GPU 上怎么落地 |
-| **FlashAttention-3 与 Decode 侧优化** | Hopper 的 `wgmma` / TMA / FP8 异步流水线；Flash-Decoding 系列面向小 batch 长序列的并行策略 |
-
-前两项在源教程里**只有章节大纲、没有正文**（已在源站侧确认）；后两项是 V1/V2 之后的演进，源教程未覆盖。torch.compile 的部分内容已在 [[05-Attention 后端与图优化]]。
 
 ## 相关
 

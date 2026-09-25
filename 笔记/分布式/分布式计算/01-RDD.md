@@ -646,6 +646,45 @@ K-means、**75 台**机器、100 GB、每轮 **400 个任务**，正常情况每
 
 **即便在 1 TB 数据上，查询也只要 5–7 秒**；同一份 1 TB 文件**从磁盘查要 170 秒** —— 差了一个数量级以上。
 
+## 版本演进：RDD 之后的十二年
+
+RDD 这个抽象的落地版本是 Spark 1.0.0（**2014-05-30**），版本号此后走到 Spark 4.2.0（**2026-07-14**）。这十二年里主干上发生了三类事，每一类都正好填上 RDD 这一层刻意留下的一处空白。
+
+**第一类：结构化 API —— 从"用户写算子"到"用户写意图"。**
+
+| 版本 | 日期 | 发生了什么 |
+| --- | --- | --- |
+| 1.3.0 | 2015-03-13 | **DataFrame API** 引入；Spark SQL 同时从 alpha 状态毕业 |
+| 1.6.0 | 2016-01-04 | **Dataset API** 引入 —— "与 RDD 类似，但用自定义对象与 lambda 的同时还能拿到 Spark SQL 执行引擎的收益" |
+| 2.0.0 | 2016-07-26 | **DataFrame 与 Dataset 统一**：Scala 与 Java 里 DataFrame 就是 `Dataset[Row]` 的别名；`SparkSession` 取代 `SQLContext` 与 `HiveContext`；MLlib 的 DataFrame API 成为主 API，**RDD API 转入维护模式** |
+
+官方对 DataFrame 的定位说得很直白：**"DataFrame 是基础 RDD API 的演进，加上了命名字段与 schema 信息。"** 这句话背后是一次取舍的转移 —— RDD 交给用户的是"变换 + 依赖类型"，用户怎么写就怎么执行；有了 schema，**优化器开始能改写用户写下的意图**（谓词下推、列裁剪、join 重排）。**表达能力让出一分，优化空间就多一分**，这条互换是后面所有事情的前提。
+
+**第二类：执行层 —— 把逐行解释执行的开销拿掉。**
+
+1.6.0 引入了**统一内存管理**：执行内存与缓存内存**共享同一块区域，而不再把两块划死**。同为 1.6.0，`spark.sql.tungsten.enabled` 这个开关被**删除**了 —— Tungsten 模式与代码生成变成永远开启。到 2.0.0，**whole stage code generation** 在 SQL 与 DataFrame 的常见算子上给出 **2–10×** 的加速；同版本还带来原生 SQL parser（同时支持 ANSI-SQL 与 Hive QL）、向量化的 Parquet 扫描、以及窗口函数的原生实现。
+
+**第三类：运行时自适应 —— 把静态配置换成运行时决定。**
+
+**AQE 是这条线的落点，它对着的正是宽依赖的代价**：1.6.0 先有"自动为 join 与聚合挑选 reducer 数"的雏形，3.0.0 形成完整机制，**3.2.0 起默认开启**。它要解决的两个目标都来自静态默认值 —— `spark.sql.shuffle.partitions` 默认 **200**（这个值自 1.1.0 起就没变过），以及 `spark.sql.files.maxPartitionBytes` 默认 **128 MB**。四条主要手段各自对着一种形态：
+
+| 手段 | 关键默认值 | 对着什么问题 |
+| --- | --- | --- |
+| **合并分区** | 目标大小 `advisoryPartitionSizeInBytes` = 64 MB；下限 `minPartitionSize` = 1 MB | 分区数被静态定死，数据变小后大量任务只干一点点活 |
+| **切分倾斜分区** | `skewJoin.skewedPartitionFactor` = 5.0；`skewJoin.skewedPartitionThresholdInBytes` = 256 MB | 少数 key 挤在同一个分区里，拖成长尾任务 |
+| **sort-merge join 降级为广播 join** | `autoBroadcastJoinThreshold` 沿用 `spark.sql.autoBroadcastJoinThreshold` | 一侧很小这件事运行时才暴露，静态规划判不出来 |
+| **本地 shuffle 读取** | `localShuffleReader.enabled` = `true` | 分区不再需要重排时，仍去网络上拉一遍 shuffle 数据 |
+
+一处容易踩的默认值：**`coalescePartitions.parallelismFirst`（3.2.0 引入）默认 `true`** —— 打开时**合并分区会忽略 64 MB 这个目标大小，只守住 1 MB 的下限以最大化并行度**。官方明确建议**在繁忙集群上改成 `false`**，否则会产出大量小任务。这是个"默认值为了兼容性而取保守"的例子，也说明 AQE 的默认行为并非处处最优。
+
+**三条证据说明这些演进没有推翻 RDD 的取舍：**
+
+- **血统仍然承担容错。** 结构化 API 的执行依旧建在任务重算上，只是重算单元从"RDD 分区"变成了"算子阶段"；RDD 那一篇里"重算代价可估"的推论照旧成立 —— 这也是为什么"要不要 checkpoint"这个判断在结构化 API 里换了个名字（对中间结果做物化）之后依然要做；
+- **宽依赖仍然贵。** AQE 并没有消灭 shuffle，它做的是**把 shuffle 的规模从静态决定改成运行时决定**：合并、切分、降级、本地读取，四条都在减少"不必要的搬运"，没有一条能省掉必要的搬运；
+- **`rdd` 这个出口一直在。** 2.0.0 移除了 Python DataFrame 上直接返回 RDD 的方法（`map`、`flatMap`、`mapPartitions` 等），但把它们留在了 `dataframe.rdd` 字段上。**结构化 API 把 RDD 收成了底层接口，而没有取代它。**
+
+顺带一个闭环：2.0.0 的移除清单里有 **Bagel** —— Spark 上那个 Pregel 实现。RDD 那一篇拿 Pregel 当作"专用框架能被通用抽象表达"的论据，而 Spark 自己那个 Pregel 实现最终被移除，图计算交给 GraphX。**表达得出来，与值得作为内置组件长期维护，是两件事。**
+
 ## 能表达哪些既有模型
 
 RDD 看起来因为不可变与粗粒度变换而接口受限，但实际上能表达**相当多此前各自独立提出的集群编程模型**，而且是在"能把它们的优化也表达出来"的意义上 —— 不只是产出相同结果，还能**捕获那些框架所做的优化**：把特定数据留在内存、分区以最小化通信、以及降低故障恢复的代价。
@@ -768,3 +807,5 @@ RDD 最初是**为了容错而设计成确定性可重算**的，这个性质顺
 ## 参考
 
 - M. Zaharia, M. Chowdhury, T. Das, A. Dave, J. Ma, M. McCauley, M. J. Franklin, S. Shenker, I. Stoica. *Resilient Distributed Datasets: A Fault-Tolerant Abstraction for In-Memory Cluster Computing*. NSDI 2012.
+- Apache Spark. *Spark News（发布记录）与各版本 Release Notes*. https://spark.apache.org/news/ —— 用于核对 1.3.0 / 1.6.0 / 2.0.0 的具体变更
+- Apache Spark. *Performance Tuning*（Spark 4.2.0 文档）. https://spark.apache.org/docs/latest/sql-performance-tuning.html —— 用于核对 AQE 各配置项的默认值与引入版本
