@@ -176,7 +176,9 @@ const ExtendedTheme: Theme = {
       // The default is true, which means enabled, this parameter can be ignored;
       // If it is false, it means it is not enabled.
       // You can use `comment: true` preface to enable it separately on the page.
-      true
+      // Giscus is opt-in until this repository has a configured Giscus app.
+      // Pages can enable it explicitly with `comment: true` in frontmatter.
+      false
     );
   }
 }
