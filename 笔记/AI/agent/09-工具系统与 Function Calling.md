@@ -160,6 +160,28 @@ class ToolRegistry:
 
 `arguments` 是字符串这一点是最常见的坑——很多人直接 `args["city"]` 访问，得到 `AttributeError`（字符串没有键）。必须 `json.loads(tc.function.arguments)`。
 
+响应里几个字段必须逐一看清，判错的后果各不一样。
+
+```
+choices[0]
+├─ finish_reason           只有等于 "tool_calls" 时才该处理工具调用
+│                          └─ 等于 "stop" 说明模型决定不调工具
+├─ message.content         有工具调用时通常是 null 或空
+│                          └─ 直接用会 TypeError
+└─ message.tool_calls[]    是数组，长度 0 到 N
+     │
+     └─ tool_calls[i]
+        ├─ id             必须存下来，下一轮回传结果时要带上
+        │                 └─ 对不上不会报错，而是「静默综合错误」：
+        │                    模型基于错误的结果编出答案
+        ├─ type           一般是 "function"
+        └─ function
+           ├─ name        工具名，用来分发
+           └─ arguments   是一个 JSON 字符串，不是对象
+                          └─ 最常见的坑：直接 args["city"] 会 AttributeError，
+                             必须先 json.loads(tc.function.arguments)
+```
+
 ### 回传：两轮往返
 
 工具结果要作为**独立的 `role: "tool"` 消息**回传，且必须带 `tool_call_id`：
@@ -193,6 +215,26 @@ if choice.finish_reason == "tool_calls":
 1. **`tool_call_id` 的配对是强制的。** 对不上不会报错，而是「静默综合错误」——模型基于错误的结果编出答案，这是最难查的一类故障。
 2. **工具结果的 `content` 必须是字符串。** 要传对象得先 `json.dumps()`。
 3. **assistant 那条消息必须回填。** 漏了它、或者漏了某一条工具结果，接口会直接 400。
+
+一次工具调用最少要两轮 HTTP 往返，三条不变量都在这个往返里。
+
+```mermaid
+sequenceDiagram
+    participant A as 应用
+    participant M as 模型
+    participant T as 工具
+
+    A->>M: messages + tools 数组 + tool_choice
+    M-->>A: finish_reason 为 tool_calls；tool_calls[] 带 id 与 arguments 字符串
+    Note over A: 必须先把这条 assistant 消息追加回 messages，否则下一轮 400
+    A->>A: json.loads(tc.function.arguments) 解出参数
+    A->>T: 逐个执行（数组里可能有多个，同一个工具也可能出现两次）
+    T-->>A: 结果
+    A->>M: 每条结果一条 role 为 tool 的消息，并用 tool_call_id 与调用配对
+    M-->>A: 最终回答（finish_reason 为 stop）
+```
+
+三条不变量：**`tool_call_id` 的配对是强制的**（对不上不报错，而是静默综合错误）；**工具结果的 `content` 必须是字符串**（要传对象先 `json.dumps()`）；**assistant 那条消息必须回填**（漏了它或漏了某条工具结果，接口直接 400）。
 
 ### 并行工具调用
 
@@ -233,6 +275,40 @@ OpenAI 现在有两条线，字段不同名：
 
 **这张表解释了 MCP 存在的必要性**：写一次工具接入逻辑没法跨供应商复用，字段名、嵌套层级、参数形态（字符串 vs 对象）全都不同。见 [[13-MCP 协议|MCP 协议]]。
 
+三家供应商的概念流一样，字段名与嵌套不同。
+
+```
+调用项位置
+   OpenAI Chat Completions   choices[0].message.tool_calls[]
+   OpenAI Responses          response.output[] 里 type: "function_call" 的项
+   Anthropic                 content[] 里 type: "tool_use" 的块
+
+标识字段
+   OpenAI                    id
+   Anthropic                 tool_use_id
+
+参数形态（最实际的一处差别）
+   OpenAI                    function.arguments 是 JSON 字符串，要 json.loads
+   Anthropic                 input 已解析成对象，直接用
+
+结束原因
+   OpenAI                    finish_reason: "tool_calls"
+   Anthropic                 stop_reason: "tool_use"
+
+结果回传
+   OpenAI Chat Completions   {"role": "tool", "tool_call_id": ...}
+   OpenAI Responses          {"type": "function_call_output", "call_id": ...}
+   Anthropic                 user 消息里 type: "tool_result" 块 + tool_use_id
+
+服务端状态
+   Chat Completions          无状态，messages 自己维护
+   Responses                 可服务端管理对话状态
+
+   └─ 结论：写一次工具接入逻辑没法跨供应商复用 ——
+      字段名、嵌套层级、参数形态（字符串 vs 对象）全都不同。
+      这正是 MCP 存在的必要性。
+```
+
 ## 两条路线的对比
 
 | | prompt 约束 + 正则 | Function Calling |
@@ -268,6 +344,28 @@ return client.chat.completions.create(
     model=self.llm.model, messages=messages,
     tools=tools, tool_choice=tool_choice, **client_kwargs,
 )
+```
+
+两条路线的差别在「协议承载在哪一层」。
+
+```
+                     prompt 约束 + 正则            Function Calling
+格式来源             提示词里的文字约定             API 层的 schema
+解析方式             正则提取                       模型直接返回结构化参数
+                     └─ 易被输出风格破坏
+失败模式             拿不到 Action / 引号差异 /      参数类型不匹配
+                     多输出一组                     └─ 可校验
+是否支持并行         需要自己设计格式               原生支持，数组里放多个
+鲁棒性               脆弱                          明显更强
+
+根因：用自然语言约定承载结构化协议必然脆弱。
+      Function Calling 把协议下沉到 API 参数层，从根上消掉了这类问题。
+
+但 prompt 约束路线不能丢，两种场景下它是唯一选择
+   ├─ 模型不支持原生函数调用
+   └─ 调试时能直接看到模型输出的原始文本
+判据是模型的 function_calling 能力标记 —— 这也是模型接入层里
+model_info 那个字段必须显式提供的原因。
 ```
 
 ## 安全：工具参数是注入面

@@ -9,7 +9,7 @@ PyTorch 是 AI Infra 领域最主流的框架，也是后续分布式训练与�
 
 三个层次要先分清：**Tensor 是数据单元，autograd 是求导引擎，`nn.Module` 是组织方式的约定**。训练循环把三者串起来。
 
-## 一、Tensor
+## Tensor
 
 Tensor 是多维数组 —— NumPy `ndarray` 的 GPU 加速版，外加自动微分支持。
 
@@ -62,7 +62,7 @@ print(x_bf16.nelement() * x_bf16.element_size() / 1024)   # 同形状 bf16 → 1
 
 fp16 与 bf16 同为 2 字节，差别全在指数位 —— 完整机制见 [[01-数值计算与精度]]。
 
-## 二、autograd
+## autograd
 
 计算图是 PyTorch 记下的「食谱」：前向时把每一步操作记下来，反向时沿图从结果推回每个输入的梯度。
 
@@ -102,7 +102,7 @@ print(x.grad)     # tensor([4.])
 > [!warning] `zero_grad(set_to_none=True)` 是更优的默认
 > 默认的 `zero_grad()` 是把梯度张量**填 0**；`set_to_none=True` 是把它**置为 None**。后者省掉一次全量写显存，且在第一次 `backward()` 时会重新分配而不是累加到 0 上。新版 PyTorch 已在部分场景默认用后者。
 
-## 三、`nn.Module`
+## `nn.Module`
 
 `nn.Module` 是「积木说明书」 —— 定义积木怎么拼（`forward`），并清点所有零件（参数管理）。
 
@@ -147,7 +147,7 @@ print(model.state_dict().keys())        # odict_keys(['weight', 'bias'])
 | `nn.LayerNorm` | 每个子层之后，稳定训练 |
 | `nn.Dropout` | `model.eval()` 后自动关闭 |
 
-## 四、训练循环
+## 训练循环
 
 ### DataLoader 的两个参数值得单独说
 
@@ -167,6 +167,21 @@ forward → loss → backward → optimizer.step() → optimizer.zero_grad()
 
 顺序上有一处容易搞错：`zero_grad()` 放在 `step()` 之后是经典写法，但**放在 `step()` 之前也等价**；真正不能做的是「`backward()` 之前忘了清」。另外 `optimizer.step()` 必须在 `backward()` 之后。
 
+一个训练 step 的五步，以及 `zero_grad` 该放在哪：
+
+```
+  ┌─────────┐  ┌──────┐  ┌──────────┐  ┌──────────────────┐  ┌──────────────────────┐
+  │ forward │─▶│ loss │─▶│ backward │─▶│ optimizer.step() │─▶│ optimizer.zero_grad()│
+  └─────────┘  └──────┘  └──────────┘  └──────────────────┘  └──────────────────────┘
+                                             │                          │
+                                  必须在 backward 之后        放在 step 之后是经典写法，
+                                                             放在 step 之前也等价
+
+  真正不能做的只有一件：`backward()` 之前忘了清零
+      ⇒ 上一轮的梯度会混进来（PyTorch 默认累加，不自动清零）
+      ⇒ 而这个「默认累加」正是梯度累积所依赖的行为
+```
+
 ### 学习率调度与 checkpoint
 
 ```python
@@ -182,7 +197,7 @@ torch.save({
 
 > **checkpoint 必须同时存优化器状态。** 只存模型权重的话，断点恢复后动量/二阶动量从零开始，训练曲线会出现明显扰动。**训练显存的大头就是优化器状态**（见 [[02-分布式训练总论与显存账本]]），把它存下来不是可选项。
 
-## 五、GPU 训练
+## GPU 训练
 
 ### 混合精度
 
@@ -218,7 +233,7 @@ torch.cuda.reset_peak_memory_stats()   # 只重置峰值计数器
 > 1. **`reset_peak_memory_stats()` 不释放已占显存**，只重置峰值计数器。测 BF16 时如果上一轮的 FP32 模型和优化器状态还活着，会被算进 BF16 的峰值里，结果可能算出「节省为负」。必须 `del` 掉对象再 `torch.cuda.empty_cache()`。
 > 2. **混合精度省的是激活值，不是权重与优化器状态** —— 后两者仍是 FP32。模型小、batch 小时这部分固定开销占绝对主导，测出来会是「节省 0%」。要把 batch/序列长度放大到激活值占主导，才看得到预期的约 30%–50% 节省。
 
-## 六、性能分析
+## 性能分析
 
 `torch.profiler` 回答「每个操作花了多少时间、GPU 利用率如何、哪里在空等」。
 
@@ -262,6 +277,24 @@ for i, batch in enumerate(dataloader):
 ```
 
 > `.item()` 之所以昂贵，是因为它要把一个 GPU 标量取回 CPU —— 这**要求所有已入队的 GPU 工作先做完**，等于把异步流水线截断。`.cpu()`、`print(tensor)`、`if tensor > 0` 都属于同一类隐式同步。
+
+`.item()` / `.cpu()` / `print(tensor)` 为什么昂贵：
+
+```
+  正常情况下，CPU 只负责「排队」，GPU 异步执行：
+
+    CPU  ├─launch─┬─launch─┬─launch─┬─launch─▶   （不停下来，继续往下走）
+    GPU           ├──kernel──┼──kernel──┼──kernel──▶
+
+  一旦出现 .item()：
+
+    CPU  ├─launch─┬─launch─┬──[等全部做完]──┬─launch─▶
+    GPU           ├──kernel──┼──kernel──────┤    ← 流水线被截断，GPU 空等
+
+  ⇒ `.item()` 要把一个 GPU 标量取回 CPU，这要求**所有已入队的 GPU 工作先做完**
+  ⇒ 同一类隐式同步还有：`.cpu()`、`print(tensor)`、`if tensor > 0`
+  ⇒ 改法：每 N 步记录一次，而不是每步都记
+```
 
 ## 相关
 

@@ -21,6 +21,25 @@ tags:
 
 这也是 [[09-工具系统与 Function Calling]] 里 `model_info` 必须显式声明 `function_calling` / `json_output` 的原因——**框架不能假设「兼容 OpenAI」就等于「支持这些扩展」**。
 
+「兼容 OpenAI」不是同一个东西，实际分三个层次。
+
+```
+层次一  核心参数                   可靠性：各家一致，可以放心用
+   model / messages / temperature / max_tokens / stream
+
+层次二  扩展功能                   可靠性：各家实现有差异
+   tools / tool_choice / response_format
+   流式下的 tool call 分片 / logprobs
+   └─ 接新供应商时，这是第一个要验的地方
+
+层次三  私有扩展                   可靠性：不通用
+   各家自己的参数（推理强度、思考模式之类的开关）
+   └─ 跨供应商时必然要处理
+
+可靠性沿层次递减，所以框架不能假设「兼容 OpenAI」就等于「支持这些扩展」——
+这正是 model_info 必须显式声明 function_calling / json_output 的原因。
+```
+
 ## 多提供商：用继承扩展，不改库源码
 
 直接改已安装库的源码是不该做的——它会让后续升级变得困难。正确做法是继承现有客户端，只拦截新增的 provider：
@@ -91,6 +110,27 @@ def think(self, messages, temperature=0):
 3. **用 list 收集再 `join`，不要字符串累加**。CPython 里字符串是 immutable，循环内 `+=` 在长响应上会退化成 O(n²) 的拷贝。
 
 这三点在非流式调用里都不存在——这也是为什么「本地能跑、接到长响应就出问题」这类故障常见于流式路径。
+
+流式返回的每个 chunk 是增量，三个细节都在 for 循环内部。
+
+```
+   for chunk in response:
+       │
+       ├─① chunk.choices 可能是空数组
+       │     流里会夹带用量统计之类的非内容块
+       │     └─ 直接取 chunk.choices[0] 会 IndexError
+       │
+       ├─② chunk.choices[0].delta.content 可能是 None
+       │     工具调用之类的块只有 delta.tool_calls，没有 content
+       │     └─ 必须用 or "" 兜住
+       │
+       └─③ 用 list 收集再 join，不要字符串累加
+             CPython 里字符串是 immutable，循环内 += 在长响应上
+             会退化成 O(n²) 的拷贝
+
+这三点在非流式调用里都不存在 ——
+这也是「本地能跑、接到长响应就出问题」这类故障常见于流式路径的原因。
+```
 
 ## 本地模型：VLLM 与 Ollama
 
@@ -164,6 +204,34 @@ LLM_MODEL_ID="llama3"
 ```
 
 **不用配 `LLM_API_KEY`，也不用在代码里指定 `provider`**——`HelloAgentsLLM()` 直接实例化即可。
+
+自动检测按固定优先级推断，从最可靠到最弱。
+
+```
+① 特定服务商的环境变量                最可靠：显式配置，最能表达意图
+     依次查 MODELSCOPE_API_KEY / OPENAI_API_KEY / ZHIPU_API_KEY，命中即定
+        │
+        ▼ 没命中
+② LLM_BASE_URL                        次之：要从 URL 里「猜」
+     域名匹配：api-inference.modelscope.cn / open.bigmodel.cn
+     端口匹配：:11434 ⇒ Ollama     :8000 ⇒ VLLM
+        │                              猜错的代价是请求打到错误的服务
+        ▼
+③ API Key 格式                        辅助：猜测依据本身模糊
+     ms- 前缀 ⇒ ModelScope（多家的密钥格式可能相似）
+        │
+        ▼
+④ 都没有                              兜底
+     返回 "auto"，走通用配置
+
+检测出 provider 后，按 provider 查对应环境变量并给默认 base_url
+   每个字段都是「显式传参 or 环境变量 or 默认值」的三级链
+   缺失凭证要显式抛错，而不是带着空 key 往下走 ——
+   后者的失败会推迟到第一次请求才出现，错误信息也指向不了根因
+
+这条推断链也是脆的：服务起在非默认端口就退到 local；
+URL 里带域名或反代路径就完全失效。所以显式指定 provider 永远更可靠。
+```
 
 ## 端口约定是可依赖的事实
 

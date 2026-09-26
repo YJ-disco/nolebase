@@ -10,7 +10,7 @@ MoE 是当前千亿/万亿参数模型（DeepSeek-V3、Mixtral 等）的主流�
 
 它引入了一个**前面所有并行维度都不覆盖的新维度**：专家并行（EP）。这一篇的重点是它的标志性通信模式 **All-to-All**，以及它独有的负载均衡问题。
 
-## 一、MoE 结构回顾
+## MoE 结构回顾
 
 **稠密 FFN → 稀疏 MoE：用 $E$ 个 Expert 替换单个 FFN。**
 
@@ -31,7 +31,7 @@ MoE 是当前千亿/万亿参数模型（DeepSeek-V3、Mixtral 等）的主流�
 
 **容量因子与 token 丢弃**：容量因子是每个 Expert 的 token 上限。超出的 token 会被丢弃（**跳过这个 Expert 的计算**）—— 丢弃是为了保证所有 Expert 的批形状一致，代价是**那些 token 的信息没被处理**。
 
-## 二、Expert Parallelism（EP）
+## Expert Parallelism（EP）
 
 **核心思想：不同 Expert 放在不同 GPU 上**，每卡只存 $E/N$ 个 Expert。
 
@@ -44,7 +44,7 @@ MoE 是当前千亿/万亿参数模型（DeepSeek-V3、Mixtral 等）的主流�
 
 > **这个区别决定了通信模式**：TP 切的是矩阵，通信是 AllReduce（同样的形状、求和）；EP 切的是「归属」，通信是 **All-to-All**（数据要按归属重新分发，形状会变）。
 
-## 三、All-to-All：MoE 的主要瓶颈
+## All-to-All：MoE 的主要瓶颈
 
 **每个 MoE 层要做两次 All-to-All**：
 
@@ -72,7 +72,27 @@ MoE 是当前千亿/万亿参数模型（DeepSeek-V3、Mixtral 等）的主流�
 
 **通信优化方向**：分组 All-to-All（把通信域切小）、**计算通信重叠**（Expert 算的同时传下一批 token）、专用通信库（如 DeepEP）。
 
-## 四、负载均衡
+一个 MoE 层里的两次 All-to-All：
+
+```
+  ① dispatch（分发）
+
+     卡 0 的 token ──┐
+     卡 1 的 token ──┼──▶ 按 Router 的选择，发往被选中的 K 个 Expert 所在的卡
+     卡 2 的 token ──┘        ⇒ 传的是 token 的隐藏表示
+
+  ② 各卡上的 Expert 独立计算（每卡只存 E/N 个 Expert）
+
+  ③ combine（收回）
+
+     Expert 的输出 ──▶ 发回 token 原本所在的卡
+                        ⇒ 传的是 Expert 的输出
+
+  ⇒ 每个 MoE 层要做两次，频率高
+  ⇒ 通信量随 token 数（batch × 序列长度）线性增长 —— 不像 PP 那样与层数无关
+```
+
+## 负载均衡
 
 ### 问题：Router 倾斜
 
@@ -91,7 +111,31 @@ MoE 是当前千亿/万亿参数模型（DeepSeek-V3、Mixtral 等）的主流�
 
 **Expert 容量与 drop/pad 策略**是负载均衡的下游手段：容量满了就丢 token（drop）或补齐（pad）—— 前者损失信息，后者浪费算力。
 
-## 五、EP 与其他维度的组合
+EP 与 TP 切的对象不同，因此通信模式也不同：
+
+```
+            切什么                        通信                              频率
+  TP    单个权重矩阵的行 / 列         AllReduce（形状不变，求和）           每层 2 次
+  EP    「哪些 Expert 在哪」          All-to-All（形状会变，按归属重发）    每层 2 次
+        （Expert 本身是完整的）
+
+  ⇒ 切的对象不同 ⇒ 通信模式不同：All-to-All 的按归属重排比 AllReduce 更贵
+    （每个 rank 发给其他 rank 的数据量不一定相等）
+
+  负载均衡的后果（Router 倾斜 ⇒ 少数 Expert 被过度选择）：
+
+     各 Expert 分到的 token 数
+       Expert 0 │████████████████│  ← 最忙，它决定整层的耗时
+       Expert 1 │██████          │
+       Expert 2 │███             │
+       Expert 3 │████            │
+                └────────────────┘
+
+     ⇒ 一个 MoE 层的耗时由最忙的那个 Expert 决定，其他 Expert 算完只能等
+     ⇒ 稀疏激活本该带来的收益被摊薄
+```
+
+## EP 与其他维度的组合
 
 | 组合 | 怎么切 |
 | --- | --- |
@@ -101,7 +145,7 @@ MoE 是当前千亿/万亿参数模型（DeepSeek-V3、Mixtral 等）的主流�
 
 实例：**DeepSeek-V3 / Mixtral 的并行配置**是多维组合，不是单开 EP。
 
-## 六、什么时候该上 EP
+## 什么时候该上 EP
 
 **只有模型用 MoE 架构时才需要。** 它是**架构驱动的并行维度** —— 不像 TP/PP 那样「任何模型都能用」，EP 的前提是模型里有「多个可分布的 Expert」。
 

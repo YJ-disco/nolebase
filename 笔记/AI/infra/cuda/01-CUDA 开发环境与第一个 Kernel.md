@@ -7,7 +7,7 @@ tags:
 
 这一篇走通两件事：**环境怎么搭**（驱动 / Toolkit / nvcc 三者关系与版本约束），以及**一个 kernel 从 CPU 到 GPU 要经过哪五步**。
 
-## 一、驱动与 Toolkit 不是一回事
+## 驱动与 Toolkit 不是一回事
 
 ```
 应用 / PyTorch / 自定义扩展
@@ -68,7 +68,7 @@ nvcc --version      # 验证
 
 从 CUDA 11.6 起 **Samples 不再随 Toolkit 附带**，要单独 clone。跑通 `deviceQuery` 显示 `Result = PASS` 才算整条链（驱动 + Toolkit + GPU）正常。
 
-## 二、nvcc 是编译协调器，不是编译器
+## nvcc 是编译协调器，不是编译器
 
 它把 `.cu` 里的**设备代码与主机代码分离**，分别交给 NVIDIA PTX 编译器和系统 C++ 编译器，最后链接成可执行文件：
 
@@ -138,7 +138,7 @@ add_executable(app src/main.cpp)
 target_link_libraries(app PRIVATE kernels CUDA::cudart)
 ```
 
-## 三、第一个 Kernel 的五步
+## 第一个 Kernel 的五步
 
 从 CPU 搬到 GPU，就像把工作从一个员工交给一支千人团队 —— **要准备材料、分配任务、等待完成、收回成果**：
 

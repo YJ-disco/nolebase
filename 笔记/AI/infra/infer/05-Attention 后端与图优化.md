@@ -8,7 +8,7 @@ tags:
 
 [[01-推理性能指标与瓶颈定位]] 说 Decode 卡在「等数据」上（Memory Bound）。但在**小模型、小 Batch** 的场合，还有第二个瓶颈会冒出来：**等指令**。
 
-## 一、CPU 拖了 GPU 的后腿
+## CPU 拖了 GPU 的后腿
 
 GPU 自己不会主动干活。它每做一个操作（一次矩阵乘、一次 LayerNorm、一次激活）都要由 CPU 通过一次「启动（launch）」命令告诉它。跑一遍 Transformer 有成百上千个这样的小操作，对应成百上千次 CPU→GPU 启动调用。每次启动本身有固定的 CPU 开销（构造参数、驱动调度、提交队列），量级在微秒级。
 
@@ -21,7 +21,31 @@ CPU 发射 Kernel1 → GPU 算（极快）→ CPU 发射 Kernel2 → GPU 算（�
 
 > Decode 阶段有**两重等待**：等数据（Memory Bound，靠 Batching 与量化缓解）和等指令（CPU launch 开销，靠图优化缓解）。**小模型、小 Batch 时后者尤其突出** —— 这也是为什么图优化对 Decode 加速格外有效。
 
-## 二、可插拔的 Attention 后端
+Decode 的两重等待：
+
+```
+  ① 等数据（Memory Bound）
+
+     GPU: [算几微秒][──────── 等权重从 HBM 搬过来 ~400 cycles ────────][算几微秒]
+     ⇒ 靠 Batching 与量化缓解
+
+  ② 等指令（CPU launch 开销）
+
+     无图优化时：
+
+       CPU  ├─发射 K1─┤├─发射 K2─┤├─发射 K3─┤├─发射 K4─┤
+       GPU            ├算┤         ├算┤         ├算┤
+                      ↑ 每段只有几微秒 —— GPU 大量时间在等 CPU 发下一条命令
+
+     CUDA Graph（录制一次，之后每条命令重放整张图）：
+
+       CPU  ├──────────── 一次重放 ────────────┤
+       GPU  ├K1├K2├K3├K4├ … ├K100├K101├ …     ← 成百上千次启动被压成一次
+
+  ⇒ 小模型、小 Batch 时第二重尤其突出 —— 这就是图优化对 Decode 格外有效的原因
+```
+
+## 可插拔的 Attention 后端
 
 Attention 是 Transformer 里最重、最讲究的算子，它的 Kernel 实现直接决定推理速度。vLLM 的设计是**不绑死一种实现**，提供可插拔后端：
 
@@ -43,7 +67,7 @@ vllm serve Qwen/Qwen2.5-7B-Instruct --attention-backend FLASHINFER
 
 后端支持矩阵随版本演进较快，某张卡/某个模型用哪个后端，以所用 vLLM 版本的官方文档为准。
 
-## 三、为什么后端必须支持混合批次
+## 为什么后端必须支持混合批次
 
 这里有一条和 [[03-推理调度：Continuous Batching 与 Chunked Prefill]] 的关键联系。V1 的统一调度器会把 **Prefill 的 Chunk 与 Decode 请求塞进同一步**，那这一步的 Attention 怎么算？两部分的计算形态不同：
 
@@ -58,15 +82,33 @@ vllm serve Qwen/Qwen2.5-7B-Instruct --attention-backend FLASHINFER
 
 前端到后端的这套设计出自 FlashAttention 的 IO 感知思路（`arXiv:2205.14135`）。
 
-## 四、CUDA Graph：把一串启动打包成一次
+## CUDA Graph：把一串启动打包成一次
 
-回到第一节的 CPU launch 开销。**CUDA Graph** 是 NVIDIA 提供的解药：把一连串固定的 GPU 操作**录制（capture）**成一张图，之后只需一条命令**重放（replay）**整张图，GPU 依次执行录好的所有 Kernel —— **成百上千次 CPU 启动被压缩成一次**。
+回到前面讲的 CPU launch 开销。**CUDA Graph** 是 NVIDIA 提供的解药：把一连串固定的 GPU 操作**录制（capture）**成一张图，之后只需一条命令**重放（replay）**整张图，GPU 依次执行录好的所有 Kernel —— **成百上千次 CPU 启动被压缩成一次**。
 
 前提是**录制的操作序列和张量形状必须固定**。这对 Decode 是天作之合：每步都是「处理固定 Batch 个 Token」，形状稳定，可以针对不同 Batch Size 分别录制，运行时按当前 Batch Size 选对应图重放。
 
 > [!warning] 正因为要求形状固定，vLLM **只为预设的一组 Batch Size 捕获 CUDA Graph**（`cudagraph_capture_sizes`）。实际 Batch Size 命中列表才走重放，否则回退到逐 Kernel 启动。这也意味着 CUDA Graph 的收益主要体现在 Decode（形状规整），**多变的 Prefill 较难直接套用**。
 
-## 五、Piecewise CUDA Graph：在 Attention 处切一刀
+CUDA Graph 的前提，以及它为什么天生适合 Decode：
+
+```
+  录制（capture）           重放（replay）
+  ┌──────────────────┐     ┌──────────────────┐
+  │ 一串固定的 GPU 操作 │ ──▶ │ 一条命令跑完整张图  │
+  │ 形状必须固定        │     │ 按 Batch Size 选图 │
+  └──────────────────┘     └──────────────────┘
+
+  Decode 每步都是「处理固定 Batch 个 Token」⇒ 形状稳定 ⇒ 针对不同 Batch Size
+  分别录一张图，运行时按当前 Batch Size 选对应图重放
+
+  但正因为要求形状固定：
+    · vLLM 只为预设的一组 Batch Size 捕获（cudagraph_capture_sizes）
+    · 实际 Batch Size 命中列表才走重放，否则回退到逐 Kernel 启动
+    · 收益主要体现在 Decode；多变的 Prefill 较难直接套用
+```
+
+## Piecewise CUDA Graph：在 Attention 处切一刀
 
 CUDA Graph 解决了启动开销，还有一层空间：**能不能把很多小 Kernel 本身合并成更少更大的 Kernel？** 这是 `torch.compile` 干的事 —— 把前向编译成优化后的图，通过算子融合减少 Kernel 数量。vLLM V1 中 `torch.compile` 默认开启，且**所有编译在开始服务前完成**，避免请求过程中触发编译导致延迟尖刺。
 
@@ -86,7 +128,33 @@ V1 的解法是 **Piecewise CUDA Graph（分段）**：
 
 vLLM 也支持在兼容后端下做 **Full CUDA Graph**（把 Attention 也纳入捕获），官方文档指出这在「小模型或 MoE 的 Decode」等场景能进一步提速。Piecewise 是通用默认，Full 是进阶选项。
 
-## 六、源码骨架：怎么切图与捕获
+Piecewise CUDA Graph：在 Attention 处切一刀
+
+```
+  CUDA Graph 要求形状固定，而 Attention 恰恰最难兼容（变长 KV + 复杂 Mask）
+
+  V1 的解法：
+
+    [ 非 Attention 层：CUDA Graph 重放 ] → [ Attention：eager 执行 ] → [ 非 Attention 层：图重放 ] → …
+      LayerNorm / GEMM / 激活 / 残差          保留处理变长 KV
+      （都是规整的 token-wise 操作）            与复杂 Mask 的能力
+
+  第一步是让编译器「看不进」Attention：把它注册成自定义算子
+  （torch.ops.vllm.unified_attention_with_output），Dynamo 当成黑盒不追踪，
+  但仍能围绕它捕获出完整的计算图。
+
+  切完只有三种子图（Transformer 是同构层的堆叠）：
+
+    ┌──── 首层 ────┐ ┌──────── 中间重复层 ────────┐ ┌──── 末层 ────┐
+    │ 第一个        │ │ 夹在相邻两个 Attention 之间  │ │ 最后一个      │
+    │ Attention 之前 │ │（所有中间层复用同一份）      │ │ Attention 之后│
+    └───────────────┘ └────────────────────────────┘ └──────────────┘
+        编译 1 次              编译 1 次                   编译 1 次
+
+  ⇒ 几十层的模型也只编译三种子图 —— 这是 Transformer 结构规整性的红利
+```
+
+## 源码骨架：怎么切图与捕获
 
 ### Attention 被包成不透明算子
 
@@ -128,7 +196,7 @@ llm = LLM(
 
 编译产物写入**编译缓存**（缓存键包含所有相关配置与被追踪的源文件）。缓存目录可在部署间**直接拷贝**以省掉重复编译时间；想强制重编可用 `VLLM_DISABLE_COMPILE_CACHE=1`。
 
-## 七、默认开着，但要清楚它付了什么
+## 默认开着，但要清楚它付了什么
 
 这些优化对使用者大多是**默认开启、自动生效**的：
 

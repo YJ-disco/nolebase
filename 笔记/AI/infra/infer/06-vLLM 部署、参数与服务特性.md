@@ -10,7 +10,7 @@ tags:
 
 vLLM 由 UC Berkeley Sky Computing Lab 开发。截至教程撰写时的口径（v0.19.0，2026-04）GitHub 星标 76,000+、贡献者 2,000+。
 
-## 一、它解决什么
+## 它解决什么
 
 把模型搬上线最头疼的是**显存不够用、吞吐上不去**。vLLM 的两大支点是：
 
@@ -23,7 +23,7 @@ vLLM 由 UC Berkeley Sky Computing Lab 开发。截至教程撰写时的口径�
 | 多硬件 | NVIDIA / AMD GPU、Google TPU、Intel Gaudi、CPU |
 | 量化生态 | FP8、INT8、INT4、GPTQ、AWQ、GGUF |
 
-## 二、安装
+## 安装
 
 系统要求：Linux（推荐 Ubuntu 20.04+）、Python 3.10–3.13、CUDA 12.x、GPU Compute Capability 7.0+（Volta 及以上）。
 
@@ -43,7 +43,7 @@ uv pip install vllm --extra-index-url https://wheels.vllm.ai/rocm/
 
 ROCm 支持 Python 3.12、ROCm 7.0，要求 `glibc >= 2.35`。
 
-## 三、离线批量推理
+## 离线批量推理
 
 适合不需要实时响应的场景（批量生成、数据标注、评测跑分）。
 
@@ -86,7 +86,7 @@ vLLM 默认读取模型仓库里的 `generation_config.json` 并用其中的参�
 llm = LLM(model="...", generation_config="vllm")
 ```
 
-## 四、在线服务
+## 在线服务
 
 ```bash
 vllm serve Qwen/Qwen2.5-7B-Instruct --host 0.0.0.0 --port 8080 --tensor-parallel-size 2
@@ -117,7 +117,7 @@ vllm serve model_name --api-key my-secret-key      # 或 export VLLM_API_KEY=...
 
 把不带认证的 OpenAI 兼容服务直接暴露到公网，等于开放算力与数据。**认证要在网关层做，加 API Key、TLS 与网络隔离。**
 
-## 五、关键参数
+## 关键参数
 
 ### 采样参数（`SamplingParams`）
 
@@ -153,7 +153,16 @@ vllm serve model_name --api-key my-secret-key      # 或 export VLLM_API_KEY=...
 ### 显存怎么分
 
 ```
-总 GPU 显存 × gpu_memory_utilization = 模型权重 + KV Cache + 临时缓冲区
+总 GPU 显存
+│
+└─ × gpu_memory_utilization（默认 0.9）= 引擎配额
+     │  另外 10% 留给驱动、CUDA Context 与其他进程
+     │
+     ├─ 模型权重 ─────── 加载后固定：BF16 约 参数量 × 2 字节
+     ├─ 临时缓冲区 ───── 激活与通信缓冲，与并发无关的固定开销
+     └─ KV Cache ─────── 配额减掉上面两项，余下的全归它
+          │  可用块数 = KV 空间 ÷ (block_size × 每 Token 每层字节数)
+          └─ 块数决定 --max-num-seqs 的实际上限，也是会不会触发抢占的分界线
 ```
 
 **KV Cache 可用空间 = 总配额 − 模型权重 − 固定开销。** KV Cache 越大，能同时处理的请求越多，吞吐越高。
@@ -165,7 +174,7 @@ vllm serve model_name --max-model-len 4096            # 限制序列长度省 KV
 
 启动报 OOM 时通常就这么几条路：降低 `gpu-memory-utilization`、缩短 `max-model-len`、增加 `tensor-parallel-size` 分摊到多卡、或用量化模型。
 
-## 六、多 GPU 与并行
+## 多 GPU 与并行
 
 vLLM 支持五种并行策略：
 
@@ -191,7 +200,7 @@ FP16 下的显存需求对照：
 
 **实际所需显存 = 权重 + KV Cache + 运行时开销。** 这张表只是权重的下界 —— 见 [[10-KV Cache 与推理优化]]，长上下文下 KV 能占 50%–80%，是更常见的那道瓶颈。AWQ INT4 能把权重缩到约 1/4。
 
-## 七、V1 引擎
+## V1 引擎
 
 V1 是 vLLM 近年来最重要的一次重构，也是目前**唯一的引擎**（V0 代码已被完全移除）。版本时间线：
 
@@ -210,6 +219,32 @@ V1 是 vLLM 近年来最重要的一次重构，也是目前**唯一的引擎**�
 - **Persistent Batch** —— input tensor 通过 NumPy 缓存并增量更新，不再每次用 Python 重建
 - **Piecewise CUDA Graph** —— 见 [[05-Attention 后端与图优化]]
 
+上面四个咬合件之间只靠 ZeroMQ 传消息，没有共享内存，也没有全局锁 —— CPU 侧的分词、反分词与 HTTP 处理因此能与 GPU 上的核心循环并行推进。一次请求在 V1 里的完整路径：
+
+```mermaid
+flowchart TB
+    C["客户端<br/>OpenAI Chat Completions 请求"]
+    S["API Server 进程<br/>鉴权 · 拼 chat template · SSE 流式回包"]
+    T["Tokenizer 进程<br/>文本 → token ids"]
+    E["EngineCore 进程<br/>唯一的 GPU 核心循环"]
+    SCH["调度器<br/>统一 Token 预算，抹平 Prefill 与 Decode 的边界"]
+    EXE["模型执行<br/>Attention 后端 · Piecewise CUDA Graph"]
+    SMP["采样<br/>logits → 下一个 Token"]
+    D["Detokenizer 进程<br/>token ids → 增量文本"]
+    C -->|HTTP| S
+    S -->|prompt 文本| T
+    T -->|token ids| E
+    E --> SCH
+    SCH --> EXE
+    EXE --> SMP
+    SMP -->|"未遇 stop、未到 max_tokens"| SCH
+    SMP -->|"已生成完"| D
+    D -->|增量文本| S
+    S -->|SSE 分块| C
+```
+
+**进程边界带来两处可观测的代价。** 一是 ZeroMQ 的往返延迟，单次在几十微秒量级，相对毫秒级的 TTFT 可以忽略；二是 `EngineCore` 是**单进程串行**的，一个实例的调度吞吐上限就由它决定 —— 要提高整机吞吐，做法是在同一台机器上起多个 `EngineCore` 副本（数据并行，`--data-parallel-size`），`EngineCore` 内部的调度逻辑本身无法再切开。
+
 ### 1.7× 的来源要看清
 
 官方口径是 V1 相比 V0 吞吐**最高提升 1.7×**（测试模型 Llama 3.1 8B 与 Llama 3.3 70B）。关键在于**提升来自削减 scheduler 与编排循环的 Python/CPU 开销，不是新的 GPU Kernel**。
@@ -227,7 +262,7 @@ V1 已成为唯一引擎，升级到近期版本就是强制迁移。**升级前
 
 冷启动参考（含服务类引擎横向）：vLLM 约 **62 秒**，SGLang 约 58 秒，TensorRT-LLM 因需要按模型编译约 **28 分钟**。这是 vLLM 「从 git clone 到活端点」摩擦最小的原因之一。
 
-## 八、服务特性
+## 服务特性
 
 这些不改变推理速度的上限，却决定模型能不能接进真实产品。
 
@@ -245,7 +280,7 @@ V1 已成为唯一引擎，升级到近期版本就是强制迁移。**升级前
 
 > [!warning] **量化不等于必然加速**：硬件没有对应低精度 Kernel、或计算图频繁执行量化与反量化时，延迟可能不降反升。评估量化必须同时报模型大小、延迟、内存与精度变化。Weight-only 量化对 **Decode** 加速明显（因为 Decode 的瓶颈就是搬权重），这条在 [[01-推理性能指标与瓶颈定位]] 里已经推出。
 
-## 九、生产部署与运维
+## 生产部署与运维
 
 **容器化与 K8s**：GPU 资源请求、就绪/存活探针（**模型加载耗时长，探针阈值要放宽**，否则 Pod 会在加载完之前被判死）、镜像与权重的拉取策略。可用 vLLM Production Stack、KServe 这类现成方案。
 
@@ -257,7 +292,7 @@ V1 已成为唯一引擎，升级到近期版本就是强制迁移。**升级前
 
 **容量规划**：从 SLO 与峰值 QPS 反推 GPU 数量 —— 结合单副本压测得到的吞吐上限、显存约束和冗余系数。**单副本吞吐上限必须在目标并发下压**，空载数据会给出过于乐观的结论。
 
-## 十、排错
+## 排错
 
 | 症状 | 处理 |
 | --- | --- |
@@ -267,7 +302,26 @@ V1 已成为唯一引擎，升级到近期版本就是强制迁移。**升级前
 | 模型需要执行自定义代码 | `--trust-remote-code` |
 | 性能不达预期 | 先确认 Attention 后端、CUDA Graph 是否真的启用（别用 `--enforce-eager`） |
 
-## 十一、框架选型
+排错按三层顺序走，**顺序不要颠倒** —— 先确认「已经开启的优化」真的生效，再看 GPU 与显存，最后才看请求侧口径。跳过第一层去调采样参数或换量化版本，多数时候只是在掩盖问题。
+
+```
+性能不达预期
+├─ 第一层：确认优化真的生效
+│      Attention 后端是哪一种？FLASH_ATTN / FLASHINFER / XFORMERS
+│      CUDA Graph 是否启用？（带了 --enforce-eager 就一定是关的）
+│      prefix caching 是否开启？（V1 默认开，命令行仍可能覆盖）
+│      └─ 任一项落在「关」──▶ 先改这里，不要动采样参数与量化版本
+├─ 第二层：看 GPU 与显存
+│      利用率高、吞吐低 ────▶ 看抢占次数：KV 块不够，批次被反复踢出重算
+│      利用率低 ────────────▶ 请求不够多（batch 撑不起）或 Decode 占比高
+│      KV Cache 利用率接近 1 ─▶ 并发超了：降 --max-num-seqs 或加 TP
+│      KV Cache 利用率低 ────▶ 显存没被用满，可提 --gpu-memory-utilization
+└─ 第三层：看请求侧口径
+       平均 TTFT 正常但 P99 差 ──▶ 时间花在排队上，不是计算慢
+       输入长度分布变了 ────────▶ 先看提示词或 RAG 召回是不是变长了
+```
+
+## 框架选型
 
 | 引擎 | 强项 | 代价 |
 | --- | --- | --- |
@@ -278,6 +332,22 @@ V1 已成为唯一引擎，升级到近期版本就是强制迁移。**升级前
 2026-01 第三方 H100 SXM5 基准（Llama-3.3-70B-Instruct FP8、50 并发）下，SGLang 约 1920 tok/s、vLLM 约 1850 tok/s（约 4% 差距）。**在原始 H100 吞吐上三者已经足够接近，决定因素移到别处**：是否需要长时间编译、模型与架构覆盖面、文档与社区、以及负载形态是否偏重共享前缀。
 
 > 选型该看「引擎的取舍与我的服务形态是否匹配」，而不是单看某个基准的头名。
+
+选型的分支取决于两件事：请求之间有没有大量共享前缀，以及自己能接受多少编译与构建成本。
+
+```
+先问请求有什么共性
+├─ 大量共享长 System Prompt、多轮对话前缀 ──▶ SGLang
+│      RadixAttention 的树状复用在这种负载上领先
+│      代价：模型与架构覆盖不如 vLLM，新架构常常要等
+├─ 负载宽、模型多、要尽快上线 ──▶ vLLM
+│      冷启动约 62 s，三个里最短；生态与文档最全，出问题好查
+│      代价：专精负载上不占优
+├─ 单模型、流量确定、要榨干 H100 ──▶ TensorRT-LLM
+│      代价：构建约 28 分钟，模型还得在支持列表里
+└─ 还要统一管多模型、多版本、串流水线 ──▶ 在引擎之上加 Triton
+       引擎不动，Triton 负责请求管理、Model Repository 与 Ensemble
+```
 
 ## 相关
 

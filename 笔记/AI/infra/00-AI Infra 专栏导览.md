@@ -38,7 +38,7 @@ tags:
 
 本专栏的推理优化与分布式训练部分整理自 AIInfraGuide，按概念颗粒度重新组织；承重的量化断言逐条核对到一手来源，核对结果与出处写在各篇的 `## 参考`。
 
-- **AIInfraGuide 全站**：https://caomaolufei.github.io/AIInfraGuide/
-- **vLLM 官方文档**：https://docs.vllm.ai/en/latest/
-- **NVIDIA CUDA C++ Programming Guide**：https://docs.nvidia.com/cuda/cuda-c-programming-guide/
-- **PyTorch Distributed Overview**：https://pytorch.org/docs/stable/distributed.html
+- AIInfraGuide 全站：https://caomaolufei.github.io/AIInfraGuide/
+- vLLM 官方文档：https://docs.vllm.ai/en/latest/
+- NVIDIA CUDA C++ Programming Guide：https://docs.nvidia.com/cuda/cuda-c-programming-guide/
+- PyTorch Distributed Overview：https://pytorch.org/docs/stable/distributed.html

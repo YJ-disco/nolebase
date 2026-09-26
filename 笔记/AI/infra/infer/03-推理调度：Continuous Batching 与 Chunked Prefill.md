@@ -10,7 +10,7 @@ tags:
 
 这就是批处理的价值。但真正难的是**怎么组织这个批** —— 请求的生成长度天差地别。这一篇讲的就是调度器怎么处理这件事。
 
-## 一、Static Batching 的致命短板
+## Static Batching 的致命短板
 
 最朴素的做法：攒够一批请求，一起送进模型，**等这一批全部生成完**再开下一批。
 
@@ -28,7 +28,7 @@ tags:
 
 请求长度差异越大，浪费越严重。而聊天负载的输出长度本来就能差一个数量级。
 
-## 二、Continuous Batching：把调度粒度降到一个迭代步
+## Continuous Batching：把调度粒度降到一个迭代步
 
 破局点是把调度粒度从「一整批」细化到「一个迭代步（iteration）」。
 
@@ -51,7 +51,27 @@ tags:
 
 术语归属值得记清楚：**这个机制最早是 Orca 在 OSDI 2022 提出的**，这被称为 iteration-level scheduling；Orca 报告在同等延迟下相对 FasterTransformer 最高 **36.9×** 吞吐。「Continuous Batching」是这套细粒度调度哲学在工程界的通行叫法，TensorRT-LLM 文档里叫 in-flight batching，TGI 从 0.9（2023）起也实现了同一模型。
 
-## 三、一次调度循环里发生什么
+两种批处理在时间轴上的差别：
+
+```
+  Static Batching：等整批全部生成完才释放
+
+    步:       1 … 20 …                                500
+    请求 A    ████████ 完成 ⇒ 之后 480 步占着槽位空转 ─────┐
+    请求 B    █████████████████████████████████████████████┘ 整批才释放
+    请求 C    ████████████████ 完成 ⇒ 同样空转到 500
+              └─ GPU 利用率常只有约 30%；长度差异大时浪费可达约 95%
+
+  Continuous Batching：每一步重新组批，完成即退、新请求立即补位
+
+    步:       1      2      3      4       5
+    批       ABCD → BCDE → BDEF → DEFG → EFGH …
+              │      │      │
+              A 完成  C 完成  D 完成 ⇒ 立即移出，并从等待队列拉新请求进来
+              └─ GPU 利用率从约 30% 拉到 80% 以上
+```
+
+## 一次调度循环里发生什么
 
 vLLM 每一个 step 的循环：
 
@@ -65,7 +85,7 @@ vLLM 每一个 step 的循环：
 4. **处理产出**：新 Token 追加到各请求的 KV Cache；检查 EOS 或长度上限，完成的请求释放 KV Block 归还空闲池
 5. **循环**
 
-## 四、Continuous Batching 必须和 PagedAttention 配套
+## Continuous Batching 必须和 PagedAttention 配套
 
 这一层关系是本模块反复出现的：
 
@@ -79,7 +99,7 @@ vLLM 每一个 step 的循环：
 
 > **分页管「显存怎么放」，调度管「请求怎么排」，二者相乘才有高吞吐。** 单有其一都不够。
 
-## 五、Prefill 干扰 Decode
+## Prefill 干扰 Decode
 
 迭代级调度带来一个新问题。批是**每一步重新组**的，如果某一步里调度器把一个 4000 Token 的长 Prompt 的 Prefill 和一批 Decode 请求塞进同一个 step：
 
@@ -100,7 +120,31 @@ vLLM 每一个 step 的循环：
 
 **这是一个刻意的权衡：牺牲少量单请求 TTFT，换整批 Decode 的 TPOT 稳定。** 机制出自 SARATHI（`arXiv:2308.16369`）。
 
-## 六、Token Budget：调度的统一货币
+长 Prefill 与 Decode 塞进同一步会怎样：
+
+```
+  不分块：
+
+    步 t   [ 4000 Token 的 Prefill ][ 一批 Decode ]   ← 整步被它拉长
+           ⇒ 同批 Decode 的这个 Token 都得等它算完
+           ⇒ 用户看到「出字流畅 → 突然卡一下 → 又流畅」，P99 抖动
+
+  Chunked Prefill（4000 Token 按 512 一块，切成 8 块）：
+
+    步      │ 这一步的批次
+    t       │ [Chunk 1][ Decode ]
+    t+1     │ [Chunk 2][ Decode ]
+    t+2     │ [Chunk 3][ Decode ]
+      …     │ （每步只处理一块，剩下的算力留给 Decode 正常出字）
+           ⇒ 每步耗时可控，Decode 的 TPOT 平稳
+           ⇒ 代价：这个长请求的 TTFT 略微变大（要跨多步才 Prefill 完）
+
+  底下是统一的度量衡 —— Token Budget：
+
+    Σ Decode 请求（各 1 token） ＋ Σ Prefill Chunk（各 chunk_size token） ≤ token_budget
+```
+
+## Token Budget：调度的统一货币
 
 Chunked Prefill 要落地，调度器需要一个统一度量衡：**Token Budget**。
 
@@ -115,7 +159,7 @@ $$\underbrace{\sum \text{Decode 请求}}_{\text{每个 1 token}} + \underbrace{\
 
 > 用 Token 预算这把统一的尺子，「Chunk 该切多大」「一步能塞几个 Decode」「长 Prefill 和 Decode 怎么共处一步」都归结成同一个装箱问题。
 
-## 七、V1 的统一调度器
+## V1 的统一调度器
 
 早期 vLLM（V0）的调度器把 Prefill 和 Decode 当**两类阶段**分别处理，代码复杂且在切换时容易产生空隙。
 
@@ -185,7 +229,7 @@ def schedule(self):
 
 > 读这个调度器的精髓就一句话：**`num_computed_tokens` 一路推向 `num_tokens_with_spec`，每步推进多少由 `min(剩余需求, 剩余预算)` 决定。**
 
-## 八、调度器面对的三组冲突
+## 调度器面对的三组冲突
 
 | 冲突 | 表现 |
 | --- | --- |
@@ -204,7 +248,7 @@ def schedule(self):
 
 > [!warning] 由于批次构成随负载变化，**Continuous Batching 让延迟指标高度负载敏感**。容量规划必须在目标并发下压测。
 
-## 九、和投机解码的耦合
+## 和投机解码的耦合
 
 投机解码（Draft 模型先猜多个 Token、Target 模型并行验证）也在同一套调度框架里落脚 —— 在 `{request_id: num_tokens}` 里，投机解码的验证就是「这一步处理若干个候选 Token」。两者叠加会抬高调度复杂度：**一步内不同请求推进的 Token 数不再统一**，KV 块的增长也不再是每步一块。
 
