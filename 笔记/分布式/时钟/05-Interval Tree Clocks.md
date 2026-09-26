@@ -20,7 +20,7 @@ tags:
 | 元数据无法释放 | 回收不了 id，随 id 增长的元数据也释放不了；当不可达概率高时，"不回收"反而更划算 |
 | 局部退休只支持受限形态 | 有方案只允许"由直接祖先 join 掉"这一种终止模式 |
 
-一个对照是 **Dynamo** 的做法：Dynamo 为控制版本向量增长，会把不活跃的旧条目激进剪枝。作者的做法是"参数调过、生产环境出错概率很低"，但一般意义上这会导致旧更新**复活**（resurgence of old updates）。ITC 想避免的正是"必须靠剪枝才能控制向量长度"这个处境。
+一个对照是 **Dynamo** 的做法：Dynamo 为控制版本向量增长，会把不活跃的旧条目激进剪枝。该工程的做法是"参数调过、生产环境出错概率很低"，但一般意义上这会导致旧更新**复活**（resurgence of old updates）。ITC 想避免的正是"必须靠剪枝才能控制向量长度"这个处境。
 
 ## fork-event-join 模型
 
@@ -78,6 +78,30 @@ $$\llbracket 0 \rrbracket = 0, \qquad \llbracket 1 \rrbracket = \mathbf{1}, \qqu
 $(i_1, i_2)$ 里的两个子树被变换到**两个不相交的子区间**：$i_1$ 落在 $[0, 1/2)$，$i_2$ 落在 $[1/2, 1)$。函数取 1 的那段区间就是这个实体"拥有"的身份区间。
 
 举例：$(1, (0, 1))$ 表示函数 $\lambda x.\ \mathbf{1}(2x) + (\lambda x.\ \mathbf{1}(2x-1))(2x-1)$。
+
+id 树在 $[0,1)$ 上的含义（树 ↔ 区间）：
+
+```
+   1              [────────── 整段 [0,1) ──────────]
+   (1, 0)         [──── 左半 ────][      空       ]
+   (0, 1)         [      空      ][──── 右半 ────]
+   (i₁, i₂)       [── i₁ 的区间 ──][── i₂ 的区间 ──]      两个子树各占不相交的一半
+
+   换成树来看，区间是从根往下切出来的：
+
+       1                     (i₁, i₂)
+       │                     ╱       ╲
+     [0,1)                 i₁          i₂
+                        [0, ½)      [½, 1)
+
+   split 的四条分支：
+     split(1)         = ((1,0), (0,1))      把一个节点劈成左右两份
+     split((0, i))    = ((0,i₁), (0,i₂))    往非空的那一侧递归
+     split((i, 0))    = ((i₁,0), (i₂,0))
+     split((i₁, i₂))  = ((i₁,0), (0,i₂))    ← 不新增区间：已有的两个子树各拿一份
+
+   ⇒ 新 id 完全是本地产物 —— 不需要全局唯一编号，也不需要外部 id 服务。
+```
 
 ### 事件树
 
@@ -203,7 +227,7 @@ $$\mathrm{event}((i, e)) = (i, e'), \quad \text{subject to}\ \llbracket e' \rrbr
 ITC 在实现里把这个自由度用来**化简事件树**。做法是先用 `fill` 尝试所有"给定 id 树就能做的化简"：
 
 ```
-ll(i, e)   # 若 fill 能做一次或多次化简，返回化简后的树
+fill(i, e)   # 对给定 id 树做一次或多次化简，返回化简后的树
 ```
 
 若 `fill` 没能改动树，就退回 `grow`，"长"某个子树 —— **优先只把一个整数加一**。于是整体是：
@@ -224,6 +248,24 @@ $$\mathrm{event}(i, e) = \begin{cases} (i,\ \mathrm{fill}(i, e)) & \mathrm{fill}
 
 这个例子的注解是两条：**每次 event 都只在自己 id 覆盖的区间上抬升事件树**；以及 **join 之后能发生化简**（`sum` 里的 `norm` 就是干这个的）。这就是"stamp 会随参与者数量收缩"的具体来源。
 
+一次完整运行里的两件事，都能在 id 区间上直接看出来：
+
+```
+   ① 每次 event 只在自己 id 覆盖的区间上抬升事件树
+
+        A 占左半：event 只在左半抬升
+        [── A 抬升 ──][── 别人管 ──]
+
+   ② join 会把相邻区间并回去：sum 里的 norm 负责这一步
+
+        [── A ──][── B ──]  ──join──▶  [──── A∪B ────]
+
+        紧接着那次 event 用自己那份把事件树补满
+        ⇒ 事件函数退化成一个单独的整数，表示随之变短
+
+   ⇒ 表示随参与者数量可增可减；向量时钟的长度则单调不减，只能靠剪枝控制。
+```
+
 ## 空间性质
 
 仿真评估空间需求的结论是：**空间需求随实体数量良性地扩展，并且随时间只温和增长**。与向量时钟的关键差别是"会缩"——向量时钟的长度单调不减，只能靠剪枝控制。
@@ -243,10 +285,9 @@ $$\mathrm{event}(i, e) = \begin{cases} (i,\ \mathrm{fill}(i, e)) & \mathrm{fill}
 
 ## 相关
 
-- [[03-逻辑时钟：Lamport 与向量]] —— ITC 要泛化的对象，以及 Dynamo 版本向量的剪枝问题
-- [[03-逻辑时钟：Lamport 与向量]] —— fork-event-join 模型里 fork / event / join 三操作的历史起点
+- [[03-逻辑时钟：Lamport 与向量]] —— ITC 要泛化的对象（向量时钟与 Dynamo 版本向量的剪枝问题）；fork / event / join 三操作的历史起点也在那篇
 - [[04-全局快照与虚拟时间]] —— 同为"保留偏序"的时钟构造，但那一条线走的是格与一致割
 
 ## 参考
 
-- Paulo Sérgio Almeida, Carlos Baquero, Victor Fonte. *Interval Tree Clocks: A Logical Clock for Dynamic Systems*. DI/CCTC, Universidade do Minho, Braga, Portugal。
+- Paulo Sérgio Almeida, Carlos Baquero, Victor Fonte. *Interval Tree Clocks: A Logical Clock for Dynamic Systems*. 12th International Conference on Principles of Distributed Systems (OPODIS 2008), LNCS 5401, pp. 259–274.

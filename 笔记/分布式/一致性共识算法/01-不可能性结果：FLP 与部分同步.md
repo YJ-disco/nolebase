@@ -46,6 +46,18 @@ Fischer、Lynch、Paterson 在 1985 年的 *Impossibility of Distributed Consens
 
 由协议的部分正确性与"解总是存在"可知 $V \ne \emptyset$。**双价配置就是"决定权还悬着"的状态** —— 整个证明要做的就是找到它，并且一直待在它里面。
 
+双价与单价的关系画成执行树：
+
+```mermaid
+flowchart TD
+    C["配置 C：双价<br/>从它可达的配置中 0 与 1 都能被决定"] --> A["某个后继：0-valent<br/>此后只能决定 0"]
+    C --> B["某个后继：1-valent<br/>此后只能决定 1"]
+    C --> D["某个后继：仍双价"]
+    A -.-> A2["0-valent 配置的任何后继<br/>都还是 0-valent"]
+    B -.-> B2["1-valent 配置的任何后继<br/>都还是 1-valent"]
+    D -.->|"引理 3 保证这个分支<br/>永远不会消失"| E["一直悬置 ⇒ 一条不做决定的执行"]
+```
+
 ## 引理 1：不相交的步可以交换
 
 两个**不同进程**的步，先后施加的结果相同。这条性质在后面两个引理里都要用到，它的成立依赖进程之间只通过消息通信、且消息可能被任意延迟。
@@ -88,6 +100,37 @@ Fischer、Lynch、Paterson 在 1985 年的 *Impossibility of Distributed Consens
 
 **情形二里"取一条 $p$ 不执行任何步的决定型执行"这一步用到的正是引理 2 里同一个技巧**：把 $p$ 当作唯一的故障进程。
 
+引理 3 的两种情形各是一张交换图。
+
+```
+情形一：p′ ≠ p —— 两个步属于不同进程，由引理 1 可以交换
+
+      C₀ ──e′──▶ C₁ = D₀
+      │             │
+    e │           e │
+      ▼             ▼
+      D₀ ──e′──▶ D₁
+
+      D₀ 是 0-valent ⇒ 它的任何后继（含 D₁）都还是 0-valent；
+      而 D₁ 是 1-valent。矛盾。
+
+
+情形二：p′ = p —— 取一条 p 不执行任何步的有限决定型执行，调度为 σ
+
+      C₀ ──e′──▶ C₁
+      │             │
+    σ │           σ │
+      ▼             ▼
+      A  ──e′──▶ A₁
+      │
+    e │
+      ▼
+      A₀
+
+      A 同时可达 A₀（0-valent）与 A₁（1-valent）⇒ A 是双价；
+      而 σ 来自一条决定型执行 ⇒ A 必须是单价。矛盾。
+```
+
 ## 把引理拼起来
 
 从引理 2 得到的结论里还能再挤出一条：**从双价配置出发的任何决定型执行都会走向单价配置，因此必然存在某一步，它从双价走向单价。** 这样的一步**确定了最终的决策值**。
@@ -126,7 +169,7 @@ Fischer、Lynch、Paterson 在 1985 年的 *Impossibility of Distributed Consens
 | 放弃终止性（只保安全） | Paxos 的做法：任何时候都保持一致，只在网络"安静得够久"时才达成决定 |
 | 放弃确定性（引入随机） | 随机化共识算法，以概率 1 终止 |
 
-**第 4 节的正面结果值得单独记一下**，因为它给出了 FLP 边界的一个具体位置：协议分两阶段 —— 第一阶段每个进程广播自己的编号，然后监听另外 $L - 1$ 个进程的消息（$L = \lceil (N+1)/2 \rceil$），据此构造一个有向图 $G$：$i \to j$ 当且仅当 $j$ 收到了 $i$ 的消息，所以 $G$ 的入度是 $L - 1$；第二阶段各进程计算 $G$ 的传递闭包 $G^+$，从而知道所有与自己相关的边以及这些节点的初始值。
+**FLP 的定理 2 值得单独记一下**，因为它给出了 FLP 边界的一个具体位置：协议分两阶段 —— 第一阶段每个进程广播自己的编号，然后监听另外 $L - 1$ 个进程的消息（$L = \lceil (N+1)/2 \rceil$），据此构造一个有向图 $G$：$i \to j$ 当且仅当 $j$ 收到了 $i$ 的消息，所以 $G$ 的入度是 $L - 1$；第二阶段各进程计算 $G$ 的传递闭包 $G^+$，从而知道所有与自己相关的边以及这些节点的初始值。
 
 ## 部分同步：把模型放宽一档
 
@@ -205,3 +248,4 @@ $\Delta$ 已知，但消息系统有时不可靠（迟到或不投递）。**若
 
 - M. J. Fischer, N. A. Lynch, M. S. Paterson. *Impossibility of Distributed Consensus with One Faulty Process*. Journal of the ACM 32(2), 1985, pp. 374–382.
 - C. Dwork, N. Lynch, L. Stockmeyer. *Consensus in the Presence of Partial Synchrony*. Journal of the ACM 35(2), 1988, pp. 288–323.
+- D. Dolev, C. Dwork, L. Stockmeyer. *On the Minimal Synchronism Needed for Distributed Consensus*. Journal of the ACM 34(1), 1987, pp. 77–97.

@@ -52,6 +52,28 @@ Spinnaker 是 IBM 与 LinkedIn 合作的实验性 datastore，设计目标是**�
 
 Spinnaker 就是来拆这个假设的。
 
+四步序列画成时间线（从下往上依次推进）：
+
+```
+前提：2 路同步复制 —— 主必须先等从把提交记录落盘，才能强制自己落盘
+
+(a) 两个节点都从 LSN = 10 开始
+        主  ──── 接受写 ────▶
+        从  ──── 同步落盘 ──▶
+
+(b) 从挂了
+        从  ──── 停止 ────
+        主  ──── 继续接受写 ──────────────────────▶ 一直走到 LSN = 20
+
+(c) 主也挂了（此时 LSN = 20）
+        主  ──── 停止 ────        LSN 11–20 是客户端已经收到成功响应的写
+
+(d) 从先恢复，主仍挂着
+        从  活着，但缺 LSN 11–20 的状态
+        ⇒ 它既不能接受读、也不能接受写：只挂一个节点，数据库对读写都不可用
+        ⇒ 若主是永久失效，LSN 11–20 的已提交写随之丢失
+```
+
 ## 为什么不用 2PC
 
 2PC 也被提出来过做副本一致性，但有三条否决理由：
@@ -78,6 +100,24 @@ Spinnaker 就是来拆这个假设的。
 
 这正好回应了上面那条四步失效序列 —— 主从复制的可用性依赖于"先挂谁、后挂谁"，Paxos 的可用性只依赖"多数副本是否活着"。
 
+可用性的判据对照：
+
+```
+Spinnaker：可用性只看「多数副本是否存活」，与失效顺序无关
+
+   分区 P 的 3 个副本： [A]  [B]  [C]
+        挂掉 [A]        ⇒ 还剩 B、C 两个 ⇒ 多数存活 ⇒ 该分区仍可读写
+        再挂 [B]        ⇒ 只剩 C ⇒ 不是多数 ⇒ 该分区不可读写（此时本就无从恢复）
+
+   谁先挂、谁后挂都不改变这条判据。
+
+master-slave：可用性取决于失效顺序 —— 上面那条四步序列里，
+              只要「从先恢复、主后恢复」这一个顺序出现，整库就卡死。
+
+恢复成本的一个具体来源：日志恢复靠一个周期性的异步 commit 消息，
+提交周期取 1 秒左右时，节点恢复时间落在半秒以内。
+```
+
 ## 判据速查
 
 | 问题 | 答案 |
@@ -101,4 +141,4 @@ Spinnaker 就是来拆这个假设的。
 
 ## 参考
 
-- Jun Rao, Eugene J. Shekita, Sandeep Tata. *Using Paxos to Build a Scalable, Consistent, and Highly Available Datastore*. Proceedings of the VLDB Endowment 4(4), 2011.
+- Jun Rao, Eugene J. Shekita, Sandeep Tata. *Using Paxos to Build a Scalable, Consistent, and Highly Available Datastore*. Proceedings of the VLDB Endowment 4(4), 2011, pp. 243–254.

@@ -98,6 +98,24 @@ $m$ 被选中意味着存在一个多数派 $C$，其中每个 acceptor 都接�
 1. proposer 选定一个新编号 $n$，向某个 acceptor 集合的每个成员发请求，要求它回应：(a) **承诺不再接受任何编号小于 $n$ 的提案**；(b) **它已经接受过的、编号小于 $n$ 的最高编号提案**（如果有）。这个请求叫 **prepare 请求**。
 2. 若 proposer 收到**多数派**的响应，它就可以发出编号 $n$、值为 $v$ 的提案，其中 **$v$ 是所有响应里编号最高的那个提案的值**；若响应里没有任何提案，则 $v$ 可以是 proposer 任选的值。
 
+把这条推导链单独画出来，每一步的名称就是它挡住的那条路：
+
+```
+P1   acceptor 接受它收到的第一个提案
+     拿不下：多个 proposer 并发 ⇒ 每个值都拿不到多数派
+     ▼ 让一步：acceptor 可以接受多个提案 —— 提案 = 编号 + 值，编号唯一
+P2   被选中的提案值相同（用「对编号的归纳」表达）
+     落不了地：约束的是「被选中」这件事，不是任何可执行的动作
+     ▼
+P2a  acceptor 接受的、编号更高的提案值相同
+     与 P1 冲突：从未收到过提案的 acceptor 会被 P1 逼着接受新值
+     ▼ 把约束从「被接受」提到「被提出」
+P2b  proposer 提出的、编号更高的提案值相同
+     ▼ 对 n 归纳 ⇒ 必须知道「某个多数派已接受或将接受的最高编号提案」
+P2c  「将接受」无法预测 ⇒ 改为索取承诺：acceptor 承诺不再接受编号小于 n 的提案
+     ▼ 这个请求就是 prepare —— 两阶段协议是从证明过程里读出来的
+```
+
 ## 完整的两阶段算法
 
 把 proposer 与 acceptor 的动作合起来，算法两阶段：
@@ -119,6 +137,30 @@ acceptor 的两条规则可以合起来写成：
 P1a 蕴含 P1。
 
 **proposer 可以随时放弃一个提案**，正确性不受影响（该提案的请求或响应可能在很久之后才到达）。但有个不影响正确性的性能优化：若 acceptor 因为收到更高编号的 prepare 而忽略了某个请求，它应当告知 proposer，proposer 应当放弃该提案。
+
+一次完整的往返（多数派取 2/3 示意）：
+
+```mermaid
+sequenceDiagram
+    participant P as Proposer
+    participant A1 as Acceptor A1
+    participant A2 as Acceptor A2
+    participant A3 as Acceptor A3
+    Note over P: 选定一个比用过的都大的编号 n
+    P->>A1: prepare(n)
+    P->>A2: prepare(n)
+    P->>A3: prepare(n)
+    Note over A1,A3: 先把「已响应到 n」写稳定存储，再回应
+    A1-->>P: 承诺不再接受 < n 的提案 + 已接受的最高编号提案
+    A2-->>P: 承诺不再接受 < n 的提案 + 已接受的最高编号提案
+    Note over P: 收到多数派响应 ⇒ v 取响应里编号最高的提案值<br/>（都没有提案则 v 任选）
+    P->>A1: accept(n, v)
+    P->>A2: accept(n, v)
+    Note over A1,A2: 先把「已接受 (n, v)」写稳定存储，再回应
+    A1-->>P: accepted(n, v)
+    A2-->>P: accepted(n, v)
+    Note over A1,A2: 多数派接受 ⇒ 值 v 被选中<br/>后续 learner 的三种通知设计见下
+```
 
 ## Acceptor 要持久化的两样东西
 
@@ -192,6 +234,26 @@ learner 要知道某个值被选中，就必须知道某个提案被多数派接
 **洞是怎么来的**：leader 可以**流水线**，即在还不知道第 141 条是否被选出时就提议第 142 条。如果它对 141 发出的 phase 2 消息全部丢失、而 142 已被选出，那么其他服务器还不知道 141 是什么 —— 一旦 leader 在这时失败，序列里就留下了洞。一般化地说：
 
 > 若 leader 能超前 $\alpha$ 条命令（在第 $1 \dots i$ 条选出后就能提议第 $i+1 \dots i+\alpha$ 条），那么**最多可能出现 $\alpha - 1$ 条命令的空洞**。
+
+空洞与补洞画在日志上：
+
+```
+leader 看到的日志：
+
+   序号   1 … 134 │ 135   136   137 │ 138   139 │ 140   141 …
+   状态   已选出   │ 待定   洞    洞  │ 已选出 已选出│ 待定
+
+   状态机按序执行 ⇒ 136、137 是洞，138–140 全部卡住
+
+补洞：对 135–137 与 140 之后的实例做 phase 1，对 135、140 做 phase 2（选出各自的值），
+      再提出两个 no-op 填 136、137 —— no-op 不改变状态
+
+   序号   1 … 134 │ 135   136    137   │ 138  139 │ 140
+   状态   已选出   │ 已选出 no-op  no-op │ 可执行 可执行│ 已选出
+                   └─────── 1–140 全部选出，状态机可以推进 ───────┘
+```
+
+**洞的来处**：leader 流水线提议时，若第 141 条的 phase 2 消息全丢而 142 已选出，它一失败就在序列里留下洞。超前 $\alpha$ 条 ⇒ 最多留 $\alpha - 1$ 个洞。
 
 ### 新 leader 的 phase 1 为什么便宜
 
@@ -270,5 +332,5 @@ Google 用 Paxos 重建 Chubby 的复制层（替换掉一个有复制 bug 史�
 
 - L. Lamport. *Paxos Made Simple*. ACM SIGACT News 32(4), 2001.
 - T. Chandra, R. Griesemer, J. Redstone. *Paxos Made Live — An Engineering Perspective*. PODC 2007.
-- D. Mazières. *Paxos Made Practical*.
+- D. Mazières. *Paxos Made Practical*. https://www.scs.stanford.edu/~dm/home/papers/paxos.pdf
 - I. Keidar, S. Rajsbaum. *On the Cost of Fault-Tolerant Consensus When There Are No Faults — A Tutorial*. MIT-LCS-TR-821, 2001.

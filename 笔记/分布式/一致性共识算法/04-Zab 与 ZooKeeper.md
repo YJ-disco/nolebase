@@ -121,6 +121,22 @@ Zab 要维持三件事，才能保证副本正确：
 
 此时客户端对 $w_1$ 收到了成功、对 $w_2$ 收到了错误（因为 leader 失败）。**若 $L_1$ 后来恢复、重新当上 leader 并试图交付 $w_2$，客户端请求的因果序就被破坏，副本状态将不再正确** —— 因为 $C_2$ 已经在 $w_2$ 未生效的前提下把值改成 3 了。
 
+把上面那六步铺成时间线（$\to$ 是"提出并交付"的方向）：
+
+```
+C₁ ──▶ L₁ : w₁ = (/a, "1", 版本 1)          已交付 —— C₁ 收到成功
+C₁ ──▶ L₁ : w₂ = (/a, "2", 版本 2)          L₁ 只把它发给了自己就失败
+                              │
+                    换届（epoch 加一）      C₁ 对 w₂ 收到错误
+                              ▼
+C₂ ──▶ L₂ : w₃ = (/a, "3", 版本 2)          以「版本 1」为条件 ⇒ 已交付，版本变成 2
+                              │
+        L₁ 恢复、重新当选，想补交付 w₂ ──────┘
+                              ▼
+        若 w₂ 真的被交付，C₂ 那次条件更新（基于「版本 1」）就失去前提，
+        副本状态不再正确 ⇒ 新 leader 提出的消息必须因果后于旧 leader 已提出的消息
+```
+
 ### 广播：zxid、写盘、ACK、COMMIT
 
 broadcast 阶段本身很简单，**关键设计是用 FIFO（TCP）通道做所有通信** —— 理由是：**用 FIFO 通道，保持顺序保证就变得非常容易**，消息按通道顺序投递，只要按接收顺序处理即可。
@@ -134,6 +150,31 @@ broadcast 阶段本身很简单，**关键设计是用 FIFO（TCP）通道做所
 
 还有一个被否掉的设计：**可以不发 COMMIT，改让 follower 互相广播 ACK**。但他们拒绝了，理由有三条 —— 增加网络流量、要求**完全连通图而非星形拓扑**（星形在建立 TCP 连接上更好管理）、客户端要维护这个图并跟踪 ACK（被认为是不必要的复杂化）。
 
+一次广播的完整往返（多数派取 2/3 示意）：
+
+```mermaid
+sequenceDiagram
+    participant L as Leader
+    participant F1 as Follower A
+    participant F2 as Follower B
+    participant F3 as Follower C
+    Note over L: 赋予 zxid = (epoch, counter)
+    L->>F1: PROPOSAL(zxid, 消息)
+    L->>F2: PROPOSAL(zxid, 消息)
+    L->>F3: PROPOSAL(zxid, 消息)
+    Note over F1,F3: 写盘（能批量就批量）—— 落到磁盘介质就回 ACK，不等别的
+    F1-->>L: ACK(zxid)
+    F2-->>L: ACK(zxid)
+    Note over L: 收到多数派 ACK
+    L->>F1: COMMIT(zxid)
+    L->>F2: COMMIT(zxid)
+    L->>F3: COMMIT(zxid)
+    Note over L: 本地交付，客户端可见
+    Note over F1,F3: 收到 COMMIT 时交付
+```
+
+通道全部走 FIFO（TCP）——所以"按接收顺序处理"就足以保持顺序保证。
+
 ### zxid 的结构：epoch + counter
 
 这一节是 Zab 与 Paxos 家族最不一样的地方：
@@ -146,20 +187,79 @@ leader 换届时：取自己日志里**最高 zxid 的 epoch**，**把它加一*
 
 这个设计带来一个直接好处：**leader 失败时可以跳过（skip）实例**，从而**加速并简化恢复流程**。原因也很直白：一台曾宕机的服务器若带着**来自此前 epoch、从未被交付的提案**重启，**它不可能成为新 leader**（新 leader 的 epoch 必须更高），所以那些陈旧提案自然作废。
 
+zxid 是 64 位，两段各有分工：
+
+```
+ 63                    32 31                     0
+┌────────────────────────┬────────────────────────┐
+│        epoch           │        counter         │
+│   高 32 位：领导权代次   │  低 32 位：该代次内计数  │
+└────────────────────────┴────────────────────────┘
+
+换届时：取自己日志里最高 zxid 的 epoch → 加一 → 计数器归零
+        zxid = (旧 epoch + 1, 0)
+
+带来两个结果：
+  · 同一 epoch 上只有一个 leader 被多数派承认 ⇒ 两个 leader 不可能用同一个 zxid 发不同提案
+  · 带着「旧 epoch、从未交付」的提案重启的服务器不可能当选（新 leader 的 epoch 更高）
+    ⇒ 那些陈旧提案自然作废，恢复可以「跳过」
+```
+
 ### 恢复：两条必须的保证
 
 单纯广播处理不了 leader 失败，所以 Zab 需要恢复模式来选新 leader 并把所有服务器带到正确状态。选举必须**以高概率成功**（这是活性的来源）：选举要让 leader 知道自己当选，**还要让多数派同意这一决定**；若选举阶段出错，服务器不会推进，最终超时并重新选举。实现里有两种选举算法，最快的一种在有多数派正确服务器时**几百毫秒**完成。
 
 恢复过程中有**两条必须同时成立的保证**，它们方向相反：
 
-- **绝不能忘记已交付的消息**：一条消息在一台机器上交付过，即使那台机器失败，它**也必须在所有机器上交付**。这个情况很容易发生 —— leader 提交了消息、然后在 COMMIT 到达任何其他服务器之前失败（见 Figure 3）。因为 leader 已经提交，**客户端可能已经看到了该事务的结果**，所以必须最终交付给所有其他服务器，客户端才能看到一致的视图。
-- **被跳过的必须保持被跳过**：leader 生成了一个提案但没提交就失败（Figure 4 里的提案 3，没有任何其他服务器见过它）。它重启后重新加入时必须**丢弃这个提案** —— 否则如果它在消息 100000001、100000002 已交付之后再提交 3，就**违反了顺序保证**。
+- **绝不能忘记已交付的消息**：一条消息在一台机器上交付过，即使那台机器失败，它**也必须在所有机器上交付**。这个情况很容易发生 —— leader 提交了消息、然后在 COMMIT 到达任何其他服务器之前失败（下面的情形一）。因为 leader 已经提交，**客户端可能已经看到了该事务的结果**，所以必须最终交付给所有其他服务器，客户端才能看到一致的视图。
+- **被跳过的必须保持被跳过**：leader 生成了一个提案但没提交就失败（下面的情形二：提案 3 没有任何其他服务器见过它）。它重启后重新加入时必须**丢弃这个提案** —— 否则如果它在消息 100000001、100000002 已交付之后再提交 3，就**违反了顺序保证**。
 
 **解法**：让**leader 选举协议保证新 leader 拥有多数派服务器中最高的提案号**，于是新当选的 leader 也就拥有全部已提交消息。在提出任何新消息之前，新 leader 先确保**它事务日志里的所有消息都已被提出并被多数派 follower 提交**。
 
 一点优化：**"要求新 leader 是拥有最高 zxid 的那个进程"是一条优化** —— 有这条，新 leader 就不必先向一组 follower 问出谁的 zxid 最高、再去取缺失事务。
 
 follower 追上的机制也在同一节：leader 对刚连上的 follower，把它**没见过的 PROPOSAL 逐个排队**，然后为这些提案排队一个到"最后已提交消息"的 COMMIT；**排完之后**才把该 follower 加进广播列表参与后续的 PROPOSAL 与 ACK。
+
+恢复的两条保证各对应一个失效场景，方向正好相反。
+
+**情形一：已交付的不能忘。** leader 已提交、但 COMMIT 还没到达任何其他服务器时失败：
+
+```
+   leader      ┌── 交付 w₅（客户端已看到结果）──┐
+   follower A  │ 已写盘，未收到 COMMIT          │
+   follower B  │ 已写盘，未收到 COMMIT          │
+   follower C  │ 没收到 PROPOSAL                │
+                    │
+               leader 崩溃 ──▶ 新 leader 上台
+                    ▼
+   要求：w₅ 必须在所有机器上最终交付 —— 否则客户端看到的视图不一致
+```
+
+**情形二：被跳过的必须保持被跳过。** leader 生成了一个提案、没提交就失败，且没有其他服务器见过它：
+
+```
+   leader      提案 3 只写进了自己的日志，未提交
+   follower A  当前已交付到 zxid 100000002
+                    │
+               leader 崩溃、随后重启 ──▶ 若它把提案 3 补交付
+                    ▼
+   会把「3」排在 100000001、100000002 之后 ⇒ 违反顺序保证
+   要求：该提案必须被丢弃
+```
+
+两条靠同一个机制同时成立：**选举协议保证新 leader 拥有多数派中最高提案号**，于是它在提出任何新消息前，先确保自己日志里的全部消息都已被提出并被多数派 follower 提交。
+
+新 leader 把 follower 带进广播列表的过程：
+
+```mermaid
+sequenceDiagram
+    participant N as 新 Leader
+    participant F as 刚连上的 Follower
+    N->>F: 把它没见过的 PROPOSAL 逐个排队
+    Note over N: 再为这些提案排队一个 COMMIT，指向「最后一条已提交消息」
+    F-->>N: 追上
+    Note over N: 排完之后才把它加进广播列表，参与后续的 PROPOSAL 与 ACK
+```
 
 ## 故障模型与工程取舍
 
@@ -203,4 +303,4 @@ follower 追上的机制也在同一节：leader 对刚连上的 follower，把�
 ## 参考
 
 - Patrick Hunt, Mahadev Konar, Flavio P. Junqueira, Benjamin Reed. *ZooKeeper: Wait-free Coordination for Internet-Scale Systems*. USENIX Annual Technical Conference (ATC) 2010.
-- Benjamin Reed, Flavio P. Junqueira. *A Simple Totally Ordered Broadcast Protocol*.
+- Benjamin Reed, Flavio P. Junqueira. *A Simple Totally Ordered Broadcast Protocol*. LADIS 2008, pp. 1–6.
