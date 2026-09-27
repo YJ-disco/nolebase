@@ -138,7 +138,7 @@ $$\text{通信量}：3\Psi \quad(\underbrace{\Psi}_{\text{前向 AllGather}} + \
 
 三者的分工：
 
-- **ZeRO 是算法/论文层面的概念**（Microsoft, `arXiv:1910.02054`）
+- **ZeRO 是算法层面的概念**（Microsoft, `arXiv:1910.02054`）
 - **FSDP 是 PyTorch 原生实现**
 - **DeepSpeed 是微软的独立实现**
 

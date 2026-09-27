@@ -324,4 +324,6 @@ Anthropic 的思路是用一套明文规则（「宪法」）替代部分人工�
 - https://arxiv.org/abs/2212.08073
 - https://arxiv.org/abs/2212.10560 ｜ **WizardLM / Evol-Instruct**：https://arxiv.org/abs/2304.12244
 - https://arxiv.org/abs/2310.16944
-- ting.is-a.dev「LLM 原理」专栏第 04 篇（`scripts/ting-llm-raw/md/`，2026-09-21 抓取）。部分公式在原站转换中退化为可见文本，已按 InstructGPT 与 DPO 原论文口径重建
+- ting.is-a.dev. *LLM 原理* 专栏第 04 篇.
+
+部分公式在原站转换中退化为可见文本，已按 InstructGPT 与 DPO 原论文口径重建

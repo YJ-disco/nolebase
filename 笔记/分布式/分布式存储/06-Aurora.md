@@ -692,7 +692,7 @@ Aurora 没把一致性做成本地参数，它落在应用写法上：
 
 - A. Verbitski, A. Gupta, D. Saha, M. Brahmadesam, K. Gupta, R. Mittal, S. Krishnamurthy, S. Maurice, T. Kharatishvili, X. Bao. *Amazon Aurora: Design Considerations for High Throughput Cloud-Native Relational Databases*. SIGMOD 2017.
 - A. Verbitski, A. Gupta, D. Saha, J. Corey, K. Gupta, M. Brahmadesam, R. Mittal, S. Krishnamurthy, S. Maurice, T. Kharatishvilli, X. Bao. *Amazon Aurora: On Avoiding Distributed Consensus for I/Os, Commits, and Membership Changes*. SIGMOD 2018.
-- Amazon Web Services. *Amazon Aurora features*（存储按 10 GB 增量自动增长、上限 256 TiB；最多 15 个只读副本、副本滞后常为个位数毫秒；I/O-Optimized 在 I/O 占比超 25% 时最多省 40%；Limitless 每个分片上限 128 TiB、参考表 32 TiB）. https://aws.amazon.com/rds/aurora/features/
+- Amazon Web Services. *Amazon Aurora features*. https://aws.amazon.com/rds/aurora/features/
 - Amazon Web Services. *Amazon Aurora MySQL database clusters now support up to 256 TiB of storage volume*（2025-07，上限从此前的 128 TiB 翻倍）. https://aws.amazon.com/about-aws/whats-new/2025/07/amazon-aurora-mysql-database-clusters-256-tib-storage/
-- Amazon Web Services. *Amazon Aurora PostgreSQL Limitless Database is now generally available*（分片组容量 16–6144 ACU；只支持 I/O-Optimized；兼容 PostgreSQL 16.4）. https://aws.amazon.com/cn/blogs/china/amazon-aurora-postgresql-limitless-database-is-now-generally-available/
+- Amazon Web Services. *Amazon Aurora PostgreSQL Limitless Database is now generally available*. https://aws.amazon.com/cn/blogs/china/amazon-aurora-postgresql-limitless-database-is-now-generally-available/
 - Amazon Web Services. *Amazon Aurora Documentation*（设计上不需要重放 redo 日志做崩溃恢复；把缓冲池与数据库进程隔离使缓存能活过一次重启；Global Database 用存储级复制）. https://aws.amazon.com/documentation-overview/aurora/

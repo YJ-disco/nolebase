@@ -62,7 +62,7 @@ RLAIF 的流程：SFT 模型生成多个候选 → 用强模型评分排序 → 
 | **奖励** $R$ | 只有单步奖励 $r(s_0,y)$，任务结束时给 | **$R_{\text{Agentic}} = \sum_{t=0}^{T}\gamma^t r(s_t,a_t)$**，可给中间部分奖励 |
 | **目标** $J$ | $\mathbb{E}[r(s_0,y)]$ | $\mathbb{E}_{\tau\sim\pi_\theta}\left[\sum_t \gamma^t r(s_t,a_t)\right]$，$\tau$ 是完整轨迹 |
 
-**行动空间那一行最值得记**：它正是 [[03-ReAct|ReAct]] 论文里那个 $A \cup L$ 的强化学习版本——**「产生一条 Thought」也是一种行动**。区别在于 ReAct 是提示出来的，这里是被训练出来的。
+**行动空间那一行最值得记**：它正是 [[03-ReAct|ReAct]] 那篇里那个 $A \cup L$ 的强化学习版本——**「产生一条 Thought」也是一种行动**。区别在于 ReAct 是提示出来的，这里是被训练出来的。
 
 ### 一个具体例子
 

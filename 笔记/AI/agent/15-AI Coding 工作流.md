@@ -15,7 +15,7 @@ tags:
 
 | 项 | 值 |
 | --- | --- |
-| 时间 | 2025 年 7 月，论文 `arXiv:2507.09089` |
+| 时间 | 2025 年 7 月，`arXiv:2507.09089` |
 | 设计 | 随机对照试验（RCT）|
 | 样本 | **16 名资深开源开发者**，**246 个真实任务** |
 | 代码库 | 他们**平均工作过 5 年**的成熟项目 |
@@ -102,7 +102,7 @@ Vibe Coding 的宣传逻辑是「AI 会填平甚至反转初级与资深的差�
 
 ### 出处和它的原意
 
-**Andrej Karpathy 于 2025 年 2 月 2 日在 X 上提出**（那条推文 4.5M 浏览），原文：
+**Andrej Karpathy 于 2025 年 2 月 2 日在 X 上提出**（那条推文 4.5M 浏览），原话：
 
 > There's a new kind of coding I call "vibe coding", where you fully give in to the vibes, embrace exponentials, and forget that the code even exists.
 
@@ -336,7 +336,7 @@ Vibe Coding 的宣传逻辑是「AI 会填平甚至反转初级与资深的差�
 
 ## 参考
 
-- 论文 `arXiv:2507.09089`，写见 https://metr.org
+- arXiv:2507.09089. https://metr.org
 - https://aitoolradar.io/blog/vibe-coding-is-a-lie
 - https://www.lampdatabase.com/posts/vibe_coding_dangers.php
 - https://www.buildercog.com/blog/spec-driven-development-vs-vibe-coding-2026

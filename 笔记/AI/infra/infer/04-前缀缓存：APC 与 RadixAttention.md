@@ -163,7 +163,7 @@ SGLang 的 **RadixAttention** 用一棵 **Radix Tree（压缩前缀树）**管�
 | 来源 | 报告收益 |
 | --- | --- |
 | 2024-01 LMSYS 博客（A10G，vLLM v0.2.5 基线） | 在 agent control / MMLU / JSON decoding 工作负载上最高 **5×** 吞吐 |
-| NeurIPS 2024 论文 | 最高 **6.4×** |
+| NeurIPS 2024 | 最高 **6.4×** |
 
 > [!warning] 博客那组数字的基线是 **vLLM v0.2.5**，而 vLLM 早已把前缀缓存做到默认开启且近乎零开销，**这个 5× 不能直接拿来对比今天的 vLLM**。方向性信号成立，倍数会随基线演进而失效。
 

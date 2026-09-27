@@ -151,10 +151,11 @@ const ExtendedTheme: Theme = {
     
     // Obtain configuration from: https://giscus.app/
     giscusTalk({
-      repo: 'Jackiexiao/nolebase-template',
-      repoId: 'R_kgDOL5WHsg',
-      category: 'Announcements', // default: `General`
-      categoryId: 'DIC_kwDOL5WHss4CfTYs',
+      // Configure these values after installing the Giscus GitHub App on this repository.
+      repo: 'YJ-disco/nolebase',
+      repoId: '',
+      category: 'General', // default: `General`
+      categoryId: '',
       mapping: 'url', // default: `pathname`
       inputPosition: 'top', // default: `top`
       lang: 'zh-CN', // default: `zh-CN`
@@ -176,9 +177,7 @@ const ExtendedTheme: Theme = {
       // The default is true, which means enabled, this parameter can be ignored;
       // If it is false, it means it is not enabled.
       // You can use `comment: true` preface to enable it separately on the page.
-      // Giscus is opt-in until this repository has a configured Giscus app.
-      // Pages can enable it explicitly with `comment: true` in frontmatter.
-      false
+      true
     );
   }
 }

@@ -7,7 +7,7 @@ export const siteDescription = '极致源于梦想，追求源于热爱'
 export const include = ['笔记', '生活']
 
 /** Repo */
-export const githubRepoLink = 'https://github.com/ferifering/nolebase'
+export const githubRepoLink = 'https://github.com/YJ-disco/nolebase'
 /** Discord */
 export const discordLink = 'https://discord.gg/XuNFDcDZGj'
 
