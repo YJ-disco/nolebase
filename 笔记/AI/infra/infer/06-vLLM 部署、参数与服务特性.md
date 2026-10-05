@@ -132,7 +132,7 @@ vllm serve model_name --api-key my-secret-key      # 或 export VLLM_API_KEY=...
 | `n` | 每 prompt 生成的序列数 | 1 |
 | `seed` | 随机种子，设置后可复现 | None |
 
-采样参数的完整语义（三种切池方式、logits 调整的操作顺序）见 [[04-采样参数]]。生产常用起点是 `temperature=0.7, top_p=0.9`；**工具调用 / JSON 提取这类任务该用 `temperature=0`**。
+采样参数的完整语义（三种切池方式、logits 调整的操作顺序）见 [[05-采样参数]]。生产常用起点是 `temperature=0.7, top_p=0.9`；**工具调用 / JSON 提取这类任务该用 `temperature=0`**。
 
 ### 引擎参数
 
@@ -356,8 +356,8 @@ V1 已成为唯一引擎，升级到近期版本就是强制迁移。**升级前
 - [[04-前缀缓存：APC 与 RadixAttention]] —— 前缀感知路由与 `cache_salt`
 - [[05-Attention 后端与图优化]] —— `--attention-backend` / CUDA Graph / 编译缓存
 - [[01-推理性能指标与瓶颈定位]] —— 该采集哪些指标、在哪一层定位瓶颈
-- [[04-采样参数]] —— `SamplingParams` 各参数的语义与任务对应
-- [[08-模型选型]] —— 什么时候该用 API 而不是自建
+- [[05-采样参数]] —— `SamplingParams` 各参数的语义与任务对应
+- [[09-模型选型]] —— 什么时候该用 API 而不是自建
 
 ## 参考
 

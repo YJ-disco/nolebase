@@ -279,8 +279,8 @@ response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
 ## 相关
 
 - [[03-Decoder-Only 与自回归]] —— 自回归生成的单位是 token
-- [[04-采样参数]] —— 采样的对象是分词器切出来的 token 分布
-- [[09-位置编码]] —— token 序列进入编码器后，位置信息怎么注入
+- [[05-采样参数]] —— 采样的对象是分词器切出来的 token 分布
+- [[04-位置编码]] —— token 序列进入编码器后，位置信息怎么注入
 - [[11-RAG 检索增强]] —— 嵌入链路的第 ① 步就是过 tokenizer，且**嵌入模型的 tokenizer 与生成模型的不是同一套**
 
 ## 参考

@@ -263,7 +263,7 @@ PPO 与 GRPO 在「需要哪些模型」上的差别：
 
 - [[03-ReAct|ReAct]] —— 行动空间 $A \cup L$ 在提示层的版本，这一篇是它被训练出来的版本
 - [[02-Agent Loop|Agent Loop]] —— 训练出来的是这个循环里的策略
-- [[06-缩放法则]] —— 训练期的另一条轴（这一篇讲的是「怎么训」，那篇讲「训多大」）
+- [[07-缩放法则]] —— 训练期的另一条轴（这一篇讲的是「怎么训」，那篇讲「训多大」）
 - [[24-LLM Evaluation 与反馈闭环|LLM Evaluation 与反馈闭环]] —— 评测侧的对应方法
 - [[17-Prompt Engineering|Prompt Engineering]] —— CoT 与 Self-Consistency 是提示层对同一批能力的替代方案
 

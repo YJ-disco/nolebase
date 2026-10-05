@@ -311,7 +311,7 @@ Human Review 产出的是三元组，反哺链路有两段。
 - [[22-Rule 与 LLM 的边界|Rule 与 LLM 的边界]] —— 边界画不清时的降级路径
 - [[24-LLM Evaluation 与反馈闭环|LLM Evaluation 与反馈闭环]] —— 从 Bad Case 反哺规则的完整闭环
 - [[17-Prompt Engineering|Prompt Engineering]] —— Self-Consistency 作为一致性信号的来源
-- [[04-采样参数|采样参数]] —— 一致性与温度的关系：温度高则多样性高、一致性信号变弱
+- [[05-采样参数|采样参数]] —— 一致性与温度的关系：温度高则多样性高、一致性信号变弱
 
 ## 参考
 
