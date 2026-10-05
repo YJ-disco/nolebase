@@ -312,7 +312,8 @@ agent 的负载 = 执行循环 + 状态常驻，开销自然分三块。
 ## 参考
 
 - https://aiarch.dev/context-engineering
-- https://new.qq.com/rain/a/20240817A00SCC00 、https://baike.baidu.com/item/提示缓存/68102611
+- https://new.qq.com/rain/a/20240817A00SCC00
+- https://baike.baidu.com/item/提示缓存/68102611
 - https://news.qq.com/rain/a/20260909A07N6O00
 - https://news.qq.com/rain/a/20260526A0297T00
 - 《客户端 AI Coding 技术面经》相关讨论与《从手动喂 Prompt 到 Harness 工程》

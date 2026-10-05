@@ -285,5 +285,8 @@ sequenceDiagram
 ## 参考
 
 - 《Hello-Agents》第一章 §1.2.2、§1.2.3、§1.3
-- https://codemia.io/courses/introduction_to_agentic_ai/the_agent_loop_in_practice 、http://ai-tldr.dev/learn/ai-agents/agent-fundamentals/agent-loop-explained 、https://sistava.com/en/glossary/agent-loop 、https://www.mindstudio.ai/blog/what-is-an-agentic-loop-ai-coding-agents
+- https://codemia.io/courses/introduction_to_agentic_ai/the_agent_loop_in_practice
+- http://ai-tldr.dev/learn/ai-agents/agent-fundamentals/agent-loop-explained
+- https://sistava.com/en/glossary/agent-loop
+- https://www.mindstudio.ai/blog/what-is-an-agentic-loop-ai-coding-agents
 - https://www.besthub.dev/articles/why-agent-loops-matter-more-than-raw-model-power-ce20f7a83de8

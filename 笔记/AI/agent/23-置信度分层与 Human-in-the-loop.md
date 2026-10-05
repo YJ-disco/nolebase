@@ -315,7 +315,8 @@ Human Review 产出的是三元组，反哺链路有两段。
 
 ## 参考
 
-- https://inferensys.com/glossary/preemptive-algorithmic-cybersecurity/ai-guardrail-architectures/selective-prediction 、https://inferensys.com/glossary/algorithmic-trust-and-authority-signals/confidence-calibration/selective-classification
+- https://inferensys.com/glossary/preemptive-algorithmic-cybersecurity/ai-guardrail-architectures/selective-prediction
+- https://inferensys.com/glossary/algorithmic-trust-and-authority-signals/confidence-calibration/selective-classification
 - https://www.alphaxiv.org/zh/abs/2302.11874
 - https://ar5iv.arxiv.org/html/2409.18645
 - https://www.alphaxiv.org/zh/abs/2302.11874

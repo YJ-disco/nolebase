@@ -335,6 +335,7 @@ GRU 是简化版本：遗忘门与输入门合并成一个更新门，去掉独�
 - Bengio, Y., et al. A neural probabilistic language model. JMLR, 2003.
 - Elman, J. L. Finding structure in time. Cognitive Science, 1990.
 - Hochreiter, S., & Schmidhuber, J. Long short-term memory. Neural Computation, 1997.
-- https://sebastianraschka.com/faq/docs/perplexity-what-it-means.html 、https://computationallinguistics.com/Perplexity
+- https://sebastianraschka.com/faq/docs/perplexity-what-it-means.html
+- https://computationallinguistics.com/Perplexity
 - https://www.aiglossary.xyz/glossary/perplexity
 - https://link.springer.com/content/pdf/10.1007/978-981-92-0682-7_5

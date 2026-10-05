@@ -1026,8 +1026,8 @@ Docker MCP Gateway（把 Server 跑在隔离容器里，管生命周期与凭据
 
 ## 参考
 
-- MCP 规范（见上「版本说明」的逐页链接）
+- Model Context Protocol. *Specification（2025-06-18）*. https://modelcontextprotocol.io/specification/2025-06-18
 - https://docs.docker.com/ai/mcp-catalog-and-toolkit/mcp-gateway/
 - https://ossaihub.com/glossary/mcp-gateway
 - https://credal.ai/blog/why-organizations-need-an-mcp-gateway
-- 《Hello-Agents》第十章 §10.1–§10.2
+- Datawhale. *Hello-Agents* 第十章. https://hello-agents.datawhale.cc/

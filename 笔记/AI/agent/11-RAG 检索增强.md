@@ -535,7 +535,8 @@ if mid not in agg or s > float(agg[mid].get("score", 0.0)):
 - 《Hello-Agents》第八章 §8.3
 - https://www.scaler.com/topics/reciprocal-rank-fusion/
 - https://aiengineeringfromscratch.com/lesson.html?path=phases/11-llm-engineering/07-advanced-rag
-- https://www.theagentecosystem.com/blog/rag-chunking-strategies 、https://techsy.io/en/blog/rag-chunking-strategies
+- https://www.theagentecosystem.com/blog/rag-chunking-strategies
+- https://techsy.io/en/blog/rag-chunking-strategies
 - https://www.tech-japan.jp/en/blog/chunking-research/
 - https://arxiv.org/html/2604.01733v1
 - https://www.apex-logic.net/news/production-rag-architecture-2026

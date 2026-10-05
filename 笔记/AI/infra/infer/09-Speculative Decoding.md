@@ -214,5 +214,10 @@ $$\text{加速比} \approx \frac{\text{平均接受长度} + 1}{1} \times \frac{
 - https://arxiv.org/abs/2401.15077
 - https://arxiv.org/abs/2503.01840
 - https://docs.vllm.ai/en/latest/features/spec_decode.html
-- 来自维基百科条目与第三方技术分析，**属二手整理**，公式部分已与 Leviathan 原论文口径核对：https://en.wikipedia.org/wiki/Speculative_decoding ｜ https://aiengineeringfromscratch.com/lesson.html?path=phases/10-llms-from-scratch/25-speculative-decoding
-- 第三方分析，**按 H100 / H200 / B200 官方规格可自行复核**：https://www.thesoftwarefrontier.com/p/decode-is-memory-bound-speculation
+- https://en.wikipedia.org/wiki/Speculative_decoding
+- https://aiengineeringfromscratch.com/lesson.html?path=phases/10-llms-from-scratch/25-speculative-decoding
+- https://www.thesoftwarefrontier.com/p/decode-is-memory-bound-speculation
+
+维基百科条目与第三方技术分析属二手整理，其公式部分已与 Leviathan 论文口径核对。
+
+`decode is memory bound` 那条属第三方分析，其中的 H100 / H200 / B200 规格数字可按 NVIDIA 官方规格表自行复核。

@@ -299,7 +299,8 @@ GB200 把 NVIDIA 自研的 Grace ARM CPU 与 Blackwell GPU 通过 NVLink-C2C 封
 - https://blogs.nvidia.com.tw/blog/nvidia-hopper-architecture-in-depth/
 - https://resources.nvidia.com/en-us-tensor-core/gtc22-whitepaper-hopper
 - https://www.nvidia.com/en-us/data-center/technologies/blackwell-architecture/
-- https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvidia-ampere-architecture-whitepaper.pdf ｜ https://images.nvidia.com/content/volta-architecture/pdf/volta-architecture-whitepaper.pdf
+- https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvidia-ampere-architecture-whitepaper.pdf
+- https://images.nvidia.com/content/volta-architecture/pdf/volta-architecture-whitepaper.pdf
 - https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/index.html
 - https://docs.nvidia.com/datacenter/tesla/mig-user-guide/
 - https://www.nvidia.com/en-us/data-center/nvlink/

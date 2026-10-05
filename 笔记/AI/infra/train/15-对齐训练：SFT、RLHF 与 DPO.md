@@ -322,7 +322,8 @@ Anthropic 的思路是用一套明文规则（「宪法」）替代部分人工�
 - https://arxiv.org/abs/2307.09288
 - https://arxiv.org/abs/2305.11206
 - https://arxiv.org/abs/2212.08073
-- https://arxiv.org/abs/2212.10560 ｜ **WizardLM / Evol-Instruct**：https://arxiv.org/abs/2304.12244
+- https://arxiv.org/abs/2212.10560
+- *WizardLM / Evol-Instruct*. https://arxiv.org/abs/2304.12244
 - https://arxiv.org/abs/2310.16944
 - ting.is-a.dev. *LLM 原理* 专栏第 04 篇.
 

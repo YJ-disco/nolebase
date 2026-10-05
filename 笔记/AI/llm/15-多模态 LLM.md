@@ -238,7 +238,8 @@ Token 压缩就是在这条线上往回压：用一组固定数量的可学习�
 - https://arxiv.org/abs/2204.14198
 - https://arxiv.org/abs/2301.12597
 - https://arxiv.org/abs/2303.15343
-- https://arxiv.org/abs/2409.12191 ｜ **Gemini 1.5**：https://arxiv.org/abs/2403.05530
+- https://arxiv.org/abs/2409.12191
+- Gemini 1.5. https://arxiv.org/abs/2403.05530
 - ting.is-a.dev. *LLM 原理* 专栏第 08 篇.
 
 该篇第 1–4 章属长上下文，已拆分到 [[14-长上下文技术]]；本文只收第 5–7 章的架构、分辨率与模态三块

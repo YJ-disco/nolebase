@@ -38,7 +38,7 @@ NVIDIA 采用**前向兼容**：**新版驱动能跑旧版 Toolkit 编译的程�
 | CUDA 12.2 | ≥ 535.54 | ≥ 536.25 |
 | CUDA 11.8 | ≥ 520.61 | ≥ 520.06 |
 
-> **优先升级驱动，而不是降级 Toolkit。** 新驱动向后兼容旧 Toolkit，也为后续升级留出空间。这条与 [[04-Python、C++ 与 GPU 软件栈工程基本功]] 里「`nvidia-smi` 的 CUDA Version 不代表装了同版本 nvcc」是同一件事的两面。
+> **优先升级驱动，而不是降级 Toolkit。** 新驱动向后兼容旧 Toolkit，也为后续升级留出空间。这条与 [[02-Python、C++ 与 GPU 软件栈工程基本功]] 里「`nvidia-smi` 的 CUDA Version 不代表装了同版本 nvcc」是同一件事的两面。
 
 ### Toolkit 里有什么
 
@@ -225,7 +225,7 @@ CUDA_CHECK(cudaDeviceSynchronize());     // 抓执行错误
 
 ## 相关
 
-- [[04-Python、C++ 与 GPU 软件栈工程基本功]] —— 驱动 / Toolkit / Runtime 的分层与诊断顺序
+- [[02-Python、C++ 与 GPU 软件栈工程基本功]] —— 驱动 / Toolkit / Runtime 的分层与诊断顺序
 - [[02-CUDA 编程模型与执行模型]] —— `idx` 公式背后的三级线程层次
 - [[03-CUDA 内存模型与访存优化]] —— `cudaMalloc` 分配的是什么内存
 - [[01-GPU 硬件架构与存储层次]] —— SM、Warp 与存储层次的硬件侧

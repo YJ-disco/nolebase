@@ -65,6 +65,27 @@ master 失败时，其他 replica 在**自己的 master lease 过期后**运行�
 
 **replica 的替换**是一个工程细节：某个 replica 失败且**几小时内没恢复**时，一个简单的替换系统从**空闲池**里取一台新机器、在其上启动锁服务器二进制，然后**更新 DNS 表**，把失败 replica 的 IP 换成新的。当前 master **周期性轮询 DNS** 从而察觉变化，接着**更新 cell 数据库里的成员列表**（该列表经正常复制协议保持一致）。与此同时，新 replica 从**文件服务器上的备份 + 活跃 replica 的更新**两者结合拿到一份较新的数据库副本；**一旦它处理过一条当前 master 正等待提交的请求，它就有资格在新 master 选举中投票**。
 
+一个 cell 的部署形态：五个 replica 分置不同机架，选中一个当 master；客户端装 SDK，之后只认 master。
+
+```text
+        ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+        │  replica 1   │  │  replica 2   │  │  replica 3   │   ... 通常 5 个
+        │  (master)    │  │              │  │              │   分置不同机架
+        └──────┬───────┘  └──────┬───────┘  └──────┬───────┘
+               │  写：经共识协议复制，送达多数 replica 才确认
+               │  读：只由 master 单独满足（master lease 保证不会另有 master）
+               │  replica 只从 master 复制更新，自身不发起读写
+               └──────────────┬───┴──────────────┬────────────┘
+                              ▼
+        ┌──────────────────────────────────────────────────────┐
+        │ 客户端 + Chubby SDK（数千个，靠 KeepAlive 长连）        │
+        │ ① 向 DNS 里列出的 replica 问 master 位置              │
+        │ ② 非 master 的 replica 回以 master 身份               │
+        │ ③ 此后所有请求都发给 master，直到它不响应或自称不是    │
+        │ 本地缓存：handle / 锁 / 文件数据与节点元数据            │
+        └──────────────────────────────────────────────────────┘
+```
+
 ## 命名空间与节点
 
 接口是一个**类似 UNIX 但更简单**的文件系统：严格的树形文件与目录，名字用斜杠分隔。典型名字是
@@ -126,6 +147,27 @@ master 失败时，其他 replica 在**自己的 master lease 过期后**运行�
 > **锁持有者随时可以申请一个 sequencer —— 一个不透明的字节串，描述"紧接取锁之后"那一刻锁的状态。** 它包含**锁的名字、取得它的模式（独占或共享）、以及 lock generation number**。客户端在期望被锁保护的操作里，把这个 sequencer 一并传给服务器（例如文件服务器）。**接收方应当检验这个 sequencer 是否仍然有效、模式是否匹配；不匹配就该拒绝请求。**
 
 有效性可以对照**服务器自己的 Chubby 缓存**检查，或者 —— **如果服务器不想维护一个与 Chubby 的会话** —— 对照**它观察到的最近一个 sequencer**。这个机制得到的评价是：**只需在受影响的报文里多加一个字符串，而且很容易向开发者解释清楚。**
+
+一次典型的 sequencer 失效场景：持锁进程发出请求后失效，请求在被锁保护的范围之外到达。
+
+```mermaid
+sequenceDiagram
+    participant A as 客户端 A（持锁者）
+    participant Ch as Chubby 锁服务
+    participant S as 存储服务（如文件服务器）
+    participant B as 客户端 B
+    A->>Ch: Acquire("F", exclusive)
+    Ch-->>A: 锁 L + lock generation number
+    A->>Ch: GetSequencer()
+    Ch-->>A: sequencer（锁名 / 模式 / lock generation number）
+    A->>S: 请求 R（带上 sequencer）
+    Note over A: A 失效，锁 L 变空闲，R 仍在途
+    B->>Ch: Acquire("F")
+    Ch-->>B: 锁空闲 → B 取得 L，生成更新的 sequencer
+    B->>S: 操作（带更新的 sequencer）
+    S->>S: 校验：sequencer 是否仍有效？模式是否匹配？
+    Note over S: 此时 R 才到达 → 校验不过，拒绝 R
+```
 
 ### lock-delay：给不支持 sequencer 的服务器一个较弱的兜底
 
@@ -209,6 +251,21 @@ KeepAlive 的用法是这套设计的枢纽：**收到 KeepAlive 后，master �
 
 还有一条关于失败边界的保证：**若客户端持有某个节点的 handle $H$，而 $H$ 上任何一次操作因为会话过期而失败，则 $H$ 上后续所有操作（除 `Close()` 与 `Poison()`）都会以同样方式失败。** 用处是：**客户端据此可以保证网络或服务器中断只造成一串操作的后缀丢失，而不是任意子序列丢失** —— 这让复杂变更更容易做。
 
+会话进入 jeopardy 之后的时间轴：grace period 是"会话能否撑过一段不确定期"的窗口。
+
+```text
+   本地租约终点              jeopardy 开始                    窗口结束
+        │                         │                              │
+        ▼                         ▼                              ▼
+        ●─────────────────────────●──── grace period，默认 45 秒 ────●
+        │  客户端无法确定 master   │                              │
+        │  是否已终止会话          │  交换到一次 KeepAlive 成功     │  始终没换到
+        │  → 清空并禁用缓存        │  → 重新启用缓存（safe 事件）   │  → 会话过期
+        │                         │                              │  （expired 事件）
+        └─ 之前：缓存可用 ─────────┘                              └─ 调用以错误返回，
+                                                                     不无限期阻塞
+```
+
 ## master fail-over：九步重建
 
 master 失效或失去 master 身份时，**它丢弃关于会话、handle 和锁的内存状态**。这里有一个很巧的点：**会话租约的权威计时器跑在 master 上，所以在新 master 选出之前，这个计时器是停的** —— 这是合法的，因为它等价于延长客户端的租约。
@@ -230,6 +287,25 @@ master 失效或失去 master 身份时，**它丢弃关于会话、handle 和�
 这一节收在一句很好记的评语上：
 
 > 读者不会惊讶地得知，**这段比系统其他部分被行使得少得多的 fail-over 代码，一直是各种有意思的 bug 的富矿。**
+
+新 master 重建前任内存状态的九步，落到一条交互时序上。
+
+```mermaid
+sequenceDiagram
+    participant C as 客户端
+    participant M as 新 master
+    participant DB as 复制的数据库（Paxos）
+    Note over M: 旧 master 失效或失去身份，丢弃会话 / handle / 锁的内存状态
+    M->>M: ① 选新的 client epoch number，拒绝旧 epoch 的调用
+    M->>C: ② 可应答 master 位置请求，暂不处理会话相关操作
+    DB->>M: ③ 为库里的会话与锁建内存结构，租约延到前任可能用过的最大值
+    C->>M: ④ KeepAlive（允许），其他会话操作仍不允许
+    M-->>C: ⑤ fail-over 事件 → 客户端清空缓存，警告其他事件可能已丢失
+    C->>M: ⑥ 确认 fail-over 事件（或等到会话过期）
+    M->>M: ⑦ 允许所有操作继续
+    C->>M: ⑧ 用 fail-over 前的 handle 调用（靠 sequence number 识别）→ 重建该 handle
+    M->>M: ⑨ 约一分钟后删除没有打开 handle 的临时文件
+```
 
 ## 线上实测
 

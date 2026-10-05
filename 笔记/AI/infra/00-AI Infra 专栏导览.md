@@ -14,8 +14,9 @@ tags:
 | [[00-训练专栏导览\|`train/`]] | 用多块硬件训练 —— 框架、切分策略、通信、显存账本 |
 | [[00-推理优化专栏导览\|`infer/`]] | 把模型服务出去 —— 调度、显存管理、推理引擎、端侧 |
 | [[01-数值计算与精度]] | **横切篇** —— 浮点格式、舍入、溢出下溢、混合精度与 Loss Scaling |
+| [[02-Python、C++ 与 GPU 软件栈工程基本功]] | **横切篇** —— 沿调用链跨层追踪：三层语言的分工、Python 性能陷阱、跨语言互操作契约、GPU 软件栈的四个部分 |
 
-**前四块是一条链：硬件 → 在硬件上写算子 → 训练 → 服务。** 第五块不在链上 —— 它讲的是「**前面所有公式在有限精度下会怎么失真**」，被四块同时引用，所以放在这一层而不是任一子目录里。
+**前四块是一条链：硬件 → 在硬件上写算子 → 训练 → 服务。** 后面两块不在链上 —— 它们讲的是链上每一环都要用到的公共能力：[[01-数值计算与精度]] 管「**前面所有公式在有限精度下会怎么失真**」，[[02-Python、C++ 与 GPU 软件栈工程基本功]] 管「**出问题时沿着哪一层往下追**」。两块都被四块同时引用，所以放在这一层而不是任一子目录里。
 
 它与相邻专栏的边界是**关注点而不是技术栈**：
 
@@ -38,7 +39,7 @@ tags:
 
 本专栏的推理优化与分布式训练部分整理自 AIInfraGuide，按概念颗粒度重新组织；承重的量化断言逐条核对到一手来源，核对结果与出处写在各篇的 `## 参考`。
 
-- AIInfraGuide 全站：https://caomaolufei.github.io/AIInfraGuide/
-- vLLM 官方文档：https://docs.vllm.ai/en/latest/
-- NVIDIA CUDA C++ Programming Guide：https://docs.nvidia.com/cuda/cuda-c-programming-guide/
-- PyTorch Distributed Overview：https://pytorch.org/docs/stable/distributed.html
+- AIInfraGuide. https://caomaolufei.github.io/AIInfraGuide/
+- vLLM. *Documentation*. https://docs.vllm.ai/en/latest/
+- NVIDIA. *CUDA C++ Programming Guide*. https://docs.nvidia.com/cuda/cuda-c-programming-guide/
+- PyTorch. *Distributed Overview*. https://pytorch.org/docs/stable/distributed.html
